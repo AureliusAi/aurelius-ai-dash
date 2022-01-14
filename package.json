@@ -25,8 +25,10 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start-api": "cd api && /home/markus/.local/share/virtualenvs/api-7ynwn4Be/bin/flask run --no-debugger",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test-api": "cd api && /home/markus/.local/share/virtualenvs/api-7ynwn4Be/bin/flask test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

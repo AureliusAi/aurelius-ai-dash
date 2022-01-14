@@ -5,16 +5,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "command": "npm start", 
-      "name": "Run npm start", 
+      "command": "npm start",
+      "name": "Run npm start",
       "request": "launch",
       "type": "node-terminal"
     },
     {
-        "command": "npm run build",
-        "name": "Run npm build",
-        "request": "launch",
-        "type": "node-terminal"
+      "command": "npm run build",
+      "name": "Run npm build",
+      "request": "launch",
+      "type": "node-terminal"
     },
     {
       "type": "chrome",
@@ -22,6 +22,18 @@
       "name": "Chrome Debug",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}"
+    },
+    {
+      "command": "npm run build",
+      "name": "Run npm build",
+      "request": "launch",
+      "type": "node-terminal"
+    },
+    {
+      "command": "npm run start-api",
+      "name": "Flask API",
+      "request": "launch",
+      "type": "node-terminal"
     }
   ]
 }
