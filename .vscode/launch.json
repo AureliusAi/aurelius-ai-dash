@@ -24,12 +24,6 @@
       "webRoot": "${workspaceFolder}"
     },
     {
-      "command": "npm run build",
-      "name": "Run npm build",
-      "request": "launch",
-      "type": "node-terminal"
-    },
-    {
       "command": "npm run start-api",
       "name": "Flask API",
       "request": "launch",

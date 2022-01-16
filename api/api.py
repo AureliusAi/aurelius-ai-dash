@@ -1,3 +1,5 @@
+import time
+from scipy.stats import norm
 from flask import Flask
 from flask_sock import Sock 
 from datetime import datetime
@@ -27,7 +29,7 @@ def get_current_time():
 # Web Sockets
 ###############################################################################
 
-@sock.route('/echo')
+@sock.route('/api/ws/echo')
 def echo(ws):
   while True:
     data = ws.receive()
@@ -35,3 +37,15 @@ def echo(ws):
     dt_stamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
     print(f'\tsending back: [{dt_stamp}] {data}')
     ws.send(f'[{dt_stamp}] {data}')
+
+
+@sock.route('/api/ws/random-walk')
+def random_walk(ws):
+  delta = 0.25
+  dt = 2.0
+  x = 0.0
+  while True:
+    x = x + norm.rvs(scale=delta**2*dt)
+    print(x)
+    time.sleep(1)
+    ws.send(x)

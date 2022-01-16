@@ -5,7 +5,6 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import MuiDrawer from "@mui/material/Drawer";
@@ -18,6 +17,7 @@ import * as React from "react";
 import { Outlet } from "react-router-dom";
 import Copyright from "../page-components/Copyright";
 import { mainListItems, secondaryListItems } from "./listItems";
+
 const drawerWidth: number = 240;
 
 interface AppBarProps extends MuiAppBarProps {
