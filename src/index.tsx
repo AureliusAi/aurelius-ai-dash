@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { createTheme, styled, ThemeProvider } from "@mui/material/styles";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import "./index.css";
 import DashboardWrapper from "./dashboard/DashboardWrapper";
 import Dashboard from "./pages/dashboard";

@@ -1,6 +1,8 @@
 import time
 from scipy.stats import norm
 from flask import Flask
+from flask_cors import CORS
+from routes.data import data_pages
 from flask_sock import Sock 
 from datetime import datetime
 import pytz
@@ -8,6 +10,8 @@ import pytz
 tz = pytz.timezone('Asia/Tokyo')
 
 app = Flask(__name__, static_folder="../build", static_url_path='/')
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+app.register_blueprint(data_pages)
 sock = Sock(app)
 
 ###############################################################################
@@ -24,6 +28,8 @@ def get_current_time():
   ret = dict()
   ret['time'] = datetime.now(tz)
   return ret
+
+
 
 ###############################################################################
 # Web Sockets
