@@ -165,7 +165,7 @@ function DashboardContent() {
         }}
       >
         <Toolbar />
-        <Box sx={{ width: 1, ml: 3, mt: 3, mb: 3 }}>
+        <Box sx={{ width: 1, pr: 2, pl: 2, mt: 3, mb: 3 }}>
           <Outlet />
           <Copyright sx={{ pt: 4 }} />
         </Box>
