@@ -28,3 +28,7 @@ yarn-error.log*
 
 # sqlite files
 Data.db
+Data.db-journal
+
+# settings files
+settings.json

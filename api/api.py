@@ -2,16 +2,23 @@ import time
 from scipy.stats import norm
 from flask import Flask
 from flask_cors import CORS
-from routes.data import data_pages
 from flask_sock import Sock 
 from datetime import datetime
 import pytz
 
+# import all the pages
+from routes.data import data_pages
+from routes.training import training_pages
+
+ 
 tz = pytz.timezone('Asia/Tokyo')
 
 app = Flask(__name__, static_folder="../build", static_url_path='/')
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+#cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app)
 app.register_blueprint(data_pages)
+app.register_blueprint(training_pages)
+
 sock = Sock(app)
 
 ###############################################################################

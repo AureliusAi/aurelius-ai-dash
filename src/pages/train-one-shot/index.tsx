@@ -6,6 +6,8 @@ import DateAdapter from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import DatePicker from "@mui/lab/DatePicker";
 import TextField from "@mui/material/TextField";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { API_TRAINING_ENDPOINT } from "../../endpoints";
 
 export default function TrainOneShot() {
   const theme = useTheme();
@@ -13,6 +15,48 @@ export default function TrainOneShot() {
   const [startTrainDate, setStartTrainDate] = useState<Date | null>(new Date());
   const [endTrainDate, setEndTrainDate] = useState<Date | null>(new Date());
   const [coinNumber, setCoinNumber] = useState<number>(11);
+
+  const [isTrainingRunning, setTrainingRunning] = useState<boolean>(false);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
+
+  function onRunOneShotTrainging(event: React.MouseEvent) {
+    let startdtstr = "";
+    if (startTrainDate !== null) {
+      startdtstr = startTrainDate.toISOString().split("T")[0];
+    }
+
+    let enddtstr = "";
+    if (endTrainDate !== null) {
+      enddtstr = endTrainDate.toISOString().split("T")[0];
+    }
+    const trainOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        coinnum: coinNumber,
+        starttrainingdate: startdtstr,
+        endtrainingdate: enddtstr,
+      }),
+    };
+    setTrainingError(null);
+    setTrainingRunning(true);
+    fetch(`${API_TRAINING_ENDPOINT}/train-one-shot`, trainOptions)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          console.log(result);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setTrainingError(error);
+        }
+      )
+      .finally(() => {
+        setTrainingRunning(false);
+      });
+  }
 
   return (
     <Box>
@@ -31,6 +75,7 @@ export default function TrainOneShot() {
             <DatePicker
               label="Start Train Date"
               inputFormat="yyyy-MM-dd"
+              mask="____-__-__"
               value={startTrainDate}
               onChange={(date: Date | null) => setStartTrainDate(date)}
               renderInput={(params) => <TextField {...params} />}
@@ -42,6 +87,7 @@ export default function TrainOneShot() {
             <DatePicker
               label="End Train Date"
               inputFormat="yyyy-MM-dd"
+              mask="____-__-__"
               value={endTrainDate}
               onChange={(date: Date | null) => setEndTrainDate(date)}
               renderInput={(params) => <TextField {...params} />}
@@ -69,6 +115,11 @@ export default function TrainOneShot() {
             shrink: true,
           }}
         />
+      </Box>
+      <Box mt={2}>
+        <LoadingButton loading={isTrainingRunning} onClick={onRunOneShotTrainging} variant="contained">
+          Train One Shot
+        </LoadingButton>
       </Box>
     </Box>
   );
