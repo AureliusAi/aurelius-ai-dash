@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [plotlyData, setPlotlyData] = useState([rwData]);
 
   const echo_ws = useRef<WebSocket | null>(null);
-  const random_walk_ws = useRef<WebSocket | null>(null);
+  // const random_walk_ws = useRef<WebSocket | null>(null);
 
   useLayoutEffect(() => {
     echo_ws.current = new WebSocket("ws://localhost:5000/api/ws/echo");

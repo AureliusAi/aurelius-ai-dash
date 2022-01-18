@@ -13,17 +13,38 @@ import { AgGridReact } from "ag-grid-react";
 import React, { useEffect, useState } from "react";
 import { API_DATA_ENDPOINT } from "../../endpoints";
 import PageHeader from "../../page-components/PageHeader";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import ListItemText from "@mui/material/ListItemText";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
+import Checkbox from "@mui/material/Checkbox";
+import LoadingButton from "@mui/lab/LoadingButton";
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 export default function Data() {
   const [minDate, setMinDate] = useState<Date | null>(null);
   const [maxDate, setMaxDate] = useState<Date | null>(null);
-  const [coins, setCoins] = useState<string[] | null>(null);
+  const [availCoins, setAvailCoins] = useState<string[] | null>(null);
+  const [coinsToGet, setCoinsToGet] = React.useState<string[]>([]);
   const [isMinMaxDatesRetreivedError, setMinMaxDatesRetreivedError] = useState<string | null>(null);
   const [isMinMaxDatesBeingLoaded, setMinMaxDatesBeingLoaded] = useState<boolean>(false);
   const [isCoinsRetrievedError, setCoinsRetrievedError] = useState<string | null>(null);
-  const [isCoinsBeingLoaded, setCoinsBeingLoaded] = useState<boolean>(false);
+  const [isCoinsBeingLoaded, setCoinsBeingLoaded] = useState(false);
 
   const [histData, setHistData] = useState(null);
+  const [ishistDataLoading, setHistDataLoading] = useState(false);
 
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
@@ -62,47 +83,59 @@ export default function Data() {
     };
     setCoinsRetrievedError(null);
     setCoinsBeingLoaded(true);
-    setCoinsRetrievedError(null);
     fetch(`${API_DATA_ENDPOINT}/get-avail-coins`, coinRequestOptions)
       .then((res) => res.json())
       .then(
         (result) => {
-          setCoins(result["coin_list"].join(", "));
+          setAvailCoins(result["coin_list"]);
+          setCoinsBeingLoaded(false);
         },
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
         (error) => {
-          setCoinsBeingLoaded(true);
           setCoinsRetrievedError(error);
         }
-      );
+      )
+      .finally(() => {
+        setCoinsBeingLoaded(false);
+      });
   }, []);
+
+  const handleCoinSelectionChange = (event: SelectChangeEvent<typeof coinsToGet>) => {
+    const {
+      target: { value },
+    } = event;
+    setCoinsToGet(
+      // On autofill we get a stringified value.
+      typeof value === "string" ? value.split(",") : value
+    );
+  };
 
   function getHistoricData(event: React.MouseEvent) {
     const coinRequestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coinlist: "", startdate: startDate, enddate: endDate }),
+      body: JSON.stringify({ coinlist: coinsToGet.join(","), startdate: startDate, enddate: endDate }),
     };
     setCoinsRetrievedError(null);
-    setCoinsBeingLoaded(true);
-    setCoinsRetrievedError(null);
+    setHistDataLoading(true);
     fetch(`${API_DATA_ENDPOINT}/get-hist-data`, coinRequestOptions)
       .then((res) => res.json())
       .then(
         (result) => {
-          console.log(result.hist_data);
           setHistData(JSON.parse(result.hist_data));
         },
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
         (error) => {
-          setCoinsBeingLoaded(true);
           setCoinsRetrievedError(error);
         }
-      );
+      )
+      .finally(() => {
+        setHistDataLoading(false);
+      });
   }
 
   function on1MonthClicked(event: React.MouseEvent) {
@@ -197,11 +230,12 @@ export default function Data() {
     {
       headerName: "QuoteVolume",
       field: "quoteVolume",
+      width: 150,
     },
     {
       headerName: "WeightedAverage",
       field: "weightedAverage",
-      width: 140,
+      width: 150,
     },
   ];
 
@@ -259,7 +293,7 @@ export default function Data() {
           }}
         >
           <Box sx={{ color: theme.palette.text.secondary, paddingRight: "20px" }}>List of Coins (in the DB):</Box>
-          <Box>{coins ? coins : <CircularProgress size={18} />}</Box>
+          <Box>{availCoins ? availCoins.join(", ") : <CircularProgress size={18} />}</Box>
         </Box>
         <Box
           sx={{
@@ -314,9 +348,32 @@ export default function Data() {
             </LocalizationProvider>
           </Box>
           <Box ml={2}>
-            <Button onClick={getHistoricData} variant="contained">
+            <FormControl sx={{ width: 250 }}>
+              <InputLabel id="demo-multiple-checkbox-label">Coins</InputLabel>
+              <Select
+                labelId="demo-multiple-checkbox-label"
+                id="demo-multiple-checkbox"
+                multiple
+                value={coinsToGet}
+                onChange={handleCoinSelectionChange}
+                input={<OutlinedInput label="Tag" />}
+                renderValue={(selected) => selected.join(", ")}
+                MenuProps={MenuProps}
+              >
+                {availCoins &&
+                  availCoins.map((coin) => (
+                    <MenuItem key={coin} value={coin}>
+                      <Checkbox checked={coinsToGet.indexOf(coin) > -1} />
+                      <ListItemText primary={coin} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <Box ml={2}>
+            <LoadingButton loading={ishistDataLoading} onClick={getHistoricData} variant="contained">
               Get Data
-            </Button>
+            </LoadingButton>
           </Box>
         </Box>
       </Box>
