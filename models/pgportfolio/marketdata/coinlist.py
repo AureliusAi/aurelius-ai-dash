@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
-from pgportfolio.marketdata.poloniex import Poloniex
-from pgportfolio.tools.data import get_chart_until_success
+from models.pgportfolio.marketdata.poloniex import Poloniex
+from models.pgportfolio.tools.data import get_chart_until_success
 import pandas as pd
 from datetime import datetime
 import logging
-from pgportfolio.constants import *
+from models.pgportfolio.constants import *
 
 
 class CoinList(object):

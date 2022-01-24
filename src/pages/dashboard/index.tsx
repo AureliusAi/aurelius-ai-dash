@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Plot from "react-plotly.js";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import PageHeader from "../../page-components/PageHeader";
 import Plotly, { PlotType } from "plotly.js";
 
@@ -11,7 +11,9 @@ export default function Dashboard() {
   const [graphRevision, setGraphRevision] = useState(0);
   const [echoText, setEchoText] = useState("");
   const [echoedBackText, setEchoedBackText] = useState("");
+  const [btcTickerData, setBtcTickerData] = useState(null);
   const [randomWalkVal, setRandomWalkVal] = useState(0);
+  const [bids, setBids] = useState([0]);
   const [rwData, setRWData] = useState({
     x: [] as Date[],
     y: [] as number[],
@@ -22,18 +24,106 @@ export default function Dashboard() {
   const [plotlyData, setPlotlyData] = useState([rwData]);
 
   const echo_ws = useRef<WebSocket | null>(null);
+
+  // const btc_px_action_ws = useRef<WebSocket | null>(null);
   // const random_walk_ws = useRef<WebSocket | null>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     echo_ws.current = new WebSocket("ws://localhost:5000/api/ws/echo");
     echo_ws.current.onmessage = (evt) => {
       setEchoedBackText(evt.data);
     };
 
+    echo_ws.current.onopen = () => {
+      console.log("ws opened");
+    };
+    echo_ws.current.onclose = () => console.log("ws closed");
+
     return () => {
       echo_ws.current?.close();
     };
-  }, [echo_ws]);
+  }, []);
+
+  // useEffect(() => {
+
+  //   const btc_px_action_ws = new WebSocket("ws://localhost:5000/api/ws/btc-ticker-feed");
+
+  //   const apiCall = {
+  //     command: "subscribe",
+  //     channel: "ticker",
+  //     symbol: "BTC",
+  //   };
+
+  //   btc_px_action_ws.onopen = (event) => {
+  //     btc_px_action_ws.send(JSON.stringify(apiCall));
+  //   };
+
+  //   btc_px_action_ws.onmessage = function (event) {
+  //     setBtcTickerData(event.data);
+  //     //   const json = JSON.parse(event.data);
+  //     //   try {
+  //     //     if (json.event == "data") {
+  //     //       setBids(json.data.bids.slice(0, 5));
+  //     //     }
+  //     //   } catch (err) {
+  //     //     console.log(err);
+  //     //   }
+  //   };
+  //   return () => {
+  //     btc_px_action_ws.close();
+  //   };
+  // }, []);
+
+  //////////////////////////////////////////////////////////////////
+  //
+  //     Very nice example of how to use websockets
+  //
+  //////////////////////////////////////////////////////////////////
+  //
+  // const apiCall = {
+  //   event: "bts:subscribe",
+  //   data: { channel: "order_book_btcusd" },
+  // };
+  // useEffect(() => {
+  //   const ws = new WebSocket("wss://ws.bitstamp.net");
+  //   ws.onopen = (event) => {
+  //     ws.send(JSON.stringify(apiCall));
+  //   };
+  //   ws.onmessage = function (event) {
+  //     const json = JSON.parse(event.data);
+  //     try {
+  //       if (json.event == "data") {
+  //         setBids(json.data.bids.slice(0, 5));
+  //       }
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+  //   //clean up function
+  //   return () => ws.close();
+  // }, []);
+  // const firstBids = bids.map((item, index) => (
+  //   <div key={index}>
+  //     <p> {item}</p>
+  //   </div>
+  // ));
+
+  // useLayoutEffect(() => {
+  //   const ws = new WebSocket("wss://api.coin.z.com/ws/public/v1");
+
+  //   ws.on("open", () => {
+  //     const message = JSON.stringify({
+  //       command: "subscribe",
+  //       channel: "ticker",
+  //       symbol: "BTC",
+  //     });
+  //     ws.send(message);
+  //   });
+
+  //   ws.on("message", (data: any) => {
+  //     console.log("WebSocket message: ", data);
+  //   });
+  // }, []);
 
   var rw_trace_layout = {
     xaxis: {
@@ -115,18 +205,18 @@ export default function Dashboard() {
       <Box pt={1} sx={{ color: "#FF6666" }}>
         {echoedBackText}
       </Box>
-      <Box pt={4} sx={{ color: "#FF00FF" }}>
-        {randomWalkVal}
+      <Box pt={4} sx={{ color: "#FF0000" }}>
+        {btcTickerData}
       </Box>
       <Box>
-        <Plot
+        {/* <Plot
           divId="plty"
           useResizeHandler={true}
           onUpdate={(figure, gdiv) => console.log("was updated!!!!! " + Date())}
           revision={revno}
           data={plotlyData}
           layout={rw_trace_layout}
-        />
+        /> */}
       </Box>
     </Box>
   );

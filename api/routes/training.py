@@ -5,42 +5,55 @@ import time
 import logging
 import json
 
-from pgportfolio.tools.configprocess import preprocess_config
+from models.pgportfolio.tools.configprocess import preprocess_config
 
 training_pages = Blueprint("training", __name__)
 
 
-@training_pages.post("/api/training/train-one-shot")
-def train_one_shot():
-  """ Performs a one-shot training operation
+@training_pages.post("/api/training/get-historical-data")
+def download_historical_data():
+  """
+
+  Downloads historical data from the data provider and stores in the DB
 
   Returns:
-      object: status information  and resultsregarding the performed operation
+      JSON: object describing the status and result of the operation
   """
-  from pgportfolio.marketdata.datamatrices import DataMatrices
+
+  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  print("@training_pages.post(/api/training/get-historical-data)")
+  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+  from models.pgportfolio.marketdata.datamatrices import DataMatrices
   logging.basicConfig(level=logging.INFO)
   
-  with open("../models/pgportfolio/net_config.json") as file:
+  with open("models/pgportfolio/net_config.json") as file:
       config = json.load(file)
 
   config = preprocess_config(config)
 
   startstr:str = request.json['starttrainingdate']
   endstr:str = request.json['endtrainingdate']
+  coin_num_str:str = request.json['coin_num']
+
+  if coin_num_str == '':
+    coin_num = config["input"]["coin_number"]
+  else:
+    coin_num = int(coin_num_str)
 
 
   if startstr != '':
     startdate_dt = dateutil.parser.isoparse(startstr)
     start = int(time.mktime(startdate_dt.timetuple()))
   else:
-    start = time.mktime(datetime.strptime(config["input"]["start_date"], "%Y/%m/%d").timetuple())
+    start = time.mktime(datetime.strptime(config["input"]["start_date"], "%Y-%m-%d").timetuple())
 
 
   if endstr != '':
     enddate_dt = dateutil.parser.isoparse(endstr)
     end = int(time.mktime(enddate_dt.timetuple()))
   else:
-    end = time.mktime(datetime.strptime(config["input"]["end_date"], "%Y/%m/%d").timetuple())
+    end = time.mktime(datetime.strptime(config["input"]["end_date"], "%Y-%m-%d").timetuple())
   
 
   print(f'start date: {start}')
@@ -52,9 +65,63 @@ def train_one_shot():
                 online=True,
                 period=config["input"]["global_period"],
                 volume_average_days=config["input"]["volume_average_days"],
-                coin_filter=config["input"]["coin_number"],
+                coin_filter=coin_num,
                 is_permed=config["input"]["is_permed"],
                 test_portion=config["input"]["test_portion"],
                 portion_reversed=config["input"]["portion_reversed"])
 
-  return { "status_msg": "OK!"}
+  return { "status_msg": f"Successfully downloaded historic data from {startstr} to {endstr}", "status_code": "OK"}
+
+
+@training_pages.post("/api/training/train-one-shot")
+def train_one_shot():
+  """ Performs a one-shot training operation
+
+  Returns:
+      object: status information  and resultsregarding the performed operation
+  """
+
+  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  print("@training_pages.post(/api/training/train-one-shot)")
+  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+  import models.pgportfolio.autotrain.training
+  import models.pgportfolio.autotrain.generate as generate
+  logging.basicConfig(level=logging.INFO)
+    
+  with open("models/pgportfolio/net_config.json") as file:
+      config = json.load(file)
+
+  config = preprocess_config(config)
+
+  startstr:str = request.json['starttrainingdate']
+  endstr:str = request.json['endtrainingdate']
+  coin_num_str:str = request.json['coinnum']
+  num_processes:str = int(request.json['numprocesses'])
+  device:str = request.json['device']
+  device = device.lower()
+
+  # update config with overrides from UI
+  if coin_num_str != '':
+    config["input"]["coin_number"] = int(coin_num_str)
+  
+  if startstr != '':
+    config["input"]["start_date"] = startstr
+
+  if endstr != '':
+    config["input"]["end_date"] = endstr
+
+  # first delete training folders, generate and then run training
+
+  repeat_option = 1 # move to UI/config
+  delete_existing_dirs = True
+  generate.add_packages(config, int(repeat_option), delete_existing_dirs)
+
+  # # if not options.algo:
+  # num_processes = config["input"]
+  status_code, status_msg = models.pgportfolio.autotrain.training.train_all(config, num_processes, device)
+  # # else:
+  # #     for folder in options.folder:
+  # #         raise NotImplementedError()
+
+  return { "status_msg": status_msg, "status_code": status_code}

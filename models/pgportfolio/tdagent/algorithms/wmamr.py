@@ -1,4 +1,4 @@
-from pgportfolio.tdagent.algorithms.pamr import PAMR
+from models.pgportfolio.tdagent.algorithms.pamr import PAMR
 import numpy as np
 
 

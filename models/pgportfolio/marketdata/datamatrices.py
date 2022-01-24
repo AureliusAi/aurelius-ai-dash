@@ -1,13 +1,13 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-import pgportfolio.marketdata.globaldatamatrix as gdm
+import models.pgportfolio.marketdata.globaldatamatrix as gdm
 import numpy as np
 import pandas as pd
 import logging
-from pgportfolio.tools.configprocess import parse_time
-from pgportfolio.tools.data import get_volume_forward, get_type_list
-import pgportfolio.marketdata.replaybuffer as rb
+from models.pgportfolio.tools.configprocess import parse_time
+from models.pgportfolio.tools.data import get_volume_forward, get_type_list
+import models.pgportfolio.marketdata.replaybuffer as rb
 
 MIN_NUM_PERIOD = 3
 
@@ -209,6 +209,12 @@ class DataMatrices:
             self._train_ind, self._test_ind = np.split(indices, portion_split)
 
         self._train_ind = self._train_ind[:-(self._window_size + 1)]
+
+        logging.info(f'indices: {len(indices)}')
+        logging.info(f'len _train_ind: {len(self._train_ind)}')
+        logging.info(f'len _test_ind: {len(self._test_ind)}')
+        logging.info(f'_train_ind: [start]: {self._train_ind[0]}, [end]: {self._train_ind[len(self._train_ind)-1]}')
+        logging.info(f'_test_ind: [start]: {self._test_ind[0]}, [end]: {self._test_ind[len(self._test_ind)-1]}')
         # NOTE(zhengyao): change the logic here in order to fit both
         # reversed and normal version
         self._train_ind = list(self._train_ind)

@@ -11,8 +11,8 @@ import collections
 import numpy as np
 import pandas as pd
 import tensorflow.compat.v1 as tf
-from pgportfolio.learn.nnagent import NNAgent
-from pgportfolio.marketdata.datamatrices import DataMatrices
+from models.pgportfolio.learn.nnagent import NNAgent
+from models.pgportfolio.marketdata.datamatrices import DataMatrices
 import logging
 Result = collections.namedtuple("Result",
                                 [
@@ -207,7 +207,7 @@ class TraderTrainer:
         return self.__log_result_csv(index, time.time() - starttime)
 
     def __log_result_csv(self, index, time):
-        from pgportfolio.trade import backtest
+        from models.pgportfolio.trade import backtest
         dataframe = None
         csv_dir = './train_package/train_summary.csv'
         #tflearn.is_training(False, self._agent.session)
