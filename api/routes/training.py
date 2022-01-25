@@ -1,9 +1,15 @@
+import os
+import sys
 from flask import Blueprint, request, jsonify, make_response,url_for,redirect
 from datetime import date, datetime
 import dateutil.parser
 import time
 import logging
 import json
+from pathlib import Path
+
+import pytz
+tz = pytz.timezone('Asia/Tokyo')
 
 from models.pgportfolio.tools.configprocess import preprocess_config
 
@@ -20,12 +26,12 @@ def download_historical_data():
       JSON: object describing the status and result of the operation
   """
 
-  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  print("@training_pages.post(/api/training/get-historical-data)")
-  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-
   from models.pgportfolio.marketdata.datamatrices import DataMatrices
   logging.basicConfig(level=logging.INFO)
+
+  logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  logging.info("@training_pages.post(/api/training/get-historical-data)")
+  logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   
   with open("models/pgportfolio/net_config.json") as file:
       config = json.load(file)
@@ -56,8 +62,8 @@ def download_historical_data():
     end = time.mktime(datetime.strptime(config["input"]["end_date"], "%Y-%m-%d").timetuple())
   
 
-  print(f'start date: {start}')
-  print(f'end date: {end}')
+  logging.info(f'start date: {start}')
+  logging.info(f'end date: {end}')
   DataMatrices(start=start,
                 end=end,
                 feature_number=config["input"]["feature_number"],
@@ -81,13 +87,32 @@ def train_one_shot():
       object: status information  and resultsregarding the performed operation
   """
 
-  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  print("@training_pages.post(/api/training/train-one-shot)")
-  print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-
   import models.pgportfolio.autotrain.training
   import models.pgportfolio.autotrain.generate as generate
-  logging.basicConfig(level=logging.INFO)
+
+  tk_now = datetime.now(tz)
+  # log_file_name = f'training_log_{tk_now.strftime("%Y-%m-%d_%H%M%S")}.log'
+  log_file_name = 'training_log.log'
+  log_path = os.path.join('models','logs',log_file_name)
+  if os.path.exists(log_path):
+    os.remove(log_path)
+  if not os.path.exists(os.path.join('models','logs')):
+    os.makedirs("models/logs")
+    
+
+  # log_file = Path(log_path)
+  # log_file.touch(exist_ok=True)
+  file_handler = logging.FileHandler(filename=f'./models/logs/{log_file_name}')
+  stdout_handler = logging.StreamHandler(sys.stdout)
+  handlers = [file_handler, stdout_handler]
+
+  logging.basicConfig(level=logging.INFO, 
+    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    handlers=handlers)
+
+  logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  logging.info("@training_pages.post(/api/training/train-one-shot)")
+  logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     
   with open("models/pgportfolio/net_config.json") as file:
       config = json.load(file)
@@ -97,7 +122,8 @@ def train_one_shot():
   startstr:str = request.json['starttrainingdate']
   endstr:str = request.json['endtrainingdate']
   coin_num_str:str = request.json['coinnum']
-  num_processes:str = int(request.json['numprocesses'])
+  num_processes:int = int(request.json['numprocesses'])
+  deleteExistingRuns:bool = bool(request.json['numprocesses'])
   device:str = request.json['device']
   device = device.lower()
 
@@ -114,8 +140,7 @@ def train_one_shot():
   # first delete training folders, generate and then run training
 
   repeat_option = 1 # move to UI/config
-  delete_existing_dirs = True
-  generate.add_packages(config, int(repeat_option), delete_existing_dirs)
+  generate.add_packages(config, int(repeat_option), deleteExistingRuns)
 
   # # if not options.algo:
   # num_processes = config["input"]

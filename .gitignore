@@ -32,3 +32,10 @@ Data.db-journal
 
 # settings files
 settings.json
+
+# log files
+*.log
+
+# database and training packages
+models/database/
+models/train_package/

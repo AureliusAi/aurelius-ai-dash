@@ -4,7 +4,9 @@ import DatePicker from "@mui/lab/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import FormHelperText from "@mui/material/FormHelperText";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
@@ -12,15 +14,14 @@ import { useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import React, { ChangeEvent, useEffect, useLayoutEffect, useState } from "react";
 import { API_TRAINING_ENDPOINT } from "../../endpoints";
-import PageHeader from "../../page-components/PageHeader";
+import PageHeader, { H2Title } from "../../page-components/PageHeader";
+import { initiateLogSocket, disconnectLogSocket, subscribeToLog, sendMessage } from "../../page-components/log_sockets";
+import TextareaAutosize from "@mui/material/TextareaAutosize";
 
 export default function TrainOneShot() {
   const theme = useTheme();
 
-  const [startTrainDate, setStartTrainDate] = useState<Date | null>(new Date());
-  const [endTrainDate, setEndTrainDate] = useState<Date | null>(new Date());
-  const [coinNumber, setCoinNumber] = useState<number>(11);
-
+  // Status related variables
   const [dateRangeError, setDateRangeError] = useState<string | null>(null);
 
   const [isTrainingRunning, setTrainingRunning] = useState<boolean>(false);
@@ -30,6 +31,17 @@ export default function TrainOneShot() {
   const [isDataDownloadRunning, setDataDownloadRunning] = useState<boolean>(false);
   const [dataDownloadingError, setDataDownloadingError] = useState<string | null>(null);
   const [dataDownloadStatus, setDataDownloadStatus] = useState<string | null>(null);
+
+  // Training Input variables
+  const [startTrainDate, setStartTrainDate] = useState<Date | null>(new Date());
+  const [endTrainDate, setEndTrainDate] = useState<Date | null>(new Date());
+  const [coinNumber, setCoinNumber] = useState<number>(11);
+
+  const [deleteExistingRuns, setDeleteExistingRuns] = React.useState(true);
+
+  // streaming log related
+  const [logType, setLogType] = useState<string>("TRAINING");
+  const [logData, setLogData] = useState<Array<string>>([]);
 
   // Training loop state variables
   const [processes, setProcesses] = React.useState<string>("1");
@@ -44,6 +56,20 @@ export default function TrainOneShot() {
   useEffect(() => {
     checkDateDiff();
   }, [startTrainDate, endTrainDate]);
+
+  useEffect(() => {
+    if (logType) initiateLogSocket(logType);
+
+    subscribeToLog((err: string, data: string) => {
+      if (err) return;
+      console.log(data);
+      setLogData((oldLogs: Array<string>) => [data, ...oldLogs]);
+      console.log(logData);
+    });
+    return () => {
+      disconnectLogSocket();
+    };
+  }, [logType]);
 
   function get_training_start_date() {
     let startdtstr = "";
@@ -148,6 +174,7 @@ export default function TrainOneShot() {
         starttrainingdate: startdtstr,
         endtrainingdate: enddtstr,
         numprocesses: parseInt(processes),
+        deleteExistingRuns: deleteExistingRuns,
         device: device,
       }),
     };
@@ -295,6 +322,21 @@ export default function TrainOneShot() {
           </Select>
           <FormHelperText>Device Type</FormHelperText>
         </FormControl>
+
+        <FormControlLabel
+          sx={{ marginLeft: 2 }}
+          control={
+            <Checkbox
+              checked={deleteExistingRuns}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setDeleteExistingRuns(event.target.checked);
+              }}
+              inputProps={{ "aria-label": "controlled" }}
+            />
+          }
+          label="Delete Previous Run Instances"
+        />
+
         <Box ml={2} pb={3}>
           {dateRangeError ? (
             <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>
@@ -327,6 +369,18 @@ export default function TrainOneShot() {
             </Box>
           )}
         </Box>
+      </Box>
+      <Box mt={2}>
+        <Box>
+          <H2Title>Training Log Console</H2Title>
+        </Box>
+        <TextareaAutosize
+          value={logData}
+          aria-label="minimum height"
+          minRows={20}
+          placeholder="Training Logs"
+          style={{ width: "100%", height: "calc(100vh - 500px)" }}
+        />
       </Box>
     </Box>
   );
