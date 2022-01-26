@@ -3,20 +3,20 @@ import DateAdapter from "@mui/lab/AdapterDateFns";
 import DatePicker from "@mui/lab/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
+import { Divider, InputLabel } from "@mui/material";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import FormHelperText from "@mui/material/FormHelperText";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
+import TextareaAutosize from "@mui/material/TextareaAutosize";
 import TextField from "@mui/material/TextField";
 import React, { ChangeEvent, useEffect, useLayoutEffect, useState } from "react";
 import { API_TRAINING_ENDPOINT } from "../../endpoints";
+import { disconnectLogSocket, initiateLogSocket, subscribeToLog } from "../../page-components/log_sockets";
 import PageHeader, { H2Title } from "../../page-components/PageHeader";
-import { initiateLogSocket, disconnectLogSocket, subscribeToLog, sendMessage } from "../../page-components/log_sockets";
-import TextareaAutosize from "@mui/material/TextareaAutosize";
 
 export default function TrainOneShot() {
   const theme = useTheme();
@@ -36,16 +36,21 @@ export default function TrainOneShot() {
   const [startTrainDate, setStartTrainDate] = useState<Date | null>(new Date());
   const [endTrainDate, setEndTrainDate] = useState<Date | null>(new Date());
   const [coinNumber, setCoinNumber] = useState<number>(11);
+  const [processes, setProcesses] = useState<string>("1");
+  const [device, setDevice] = useState<string>("CPU");
+  const [numberEpochs, setNumberEpochs] = useState<number>(80000);
+  const [globalPeriod, setGlobalPeriod] = useState<string>("1800");
+  const [windowSize, setWindowSize] = useState<number>(50);
+  const [volumeAverageDays, setVolumeAverageDays] = useState<number>(30);
+  const [testPortion, setTestPortion] = useState<number>(8);
+  const [numberOfFeatures, setNumberOfFeatures] = useState<number>(3);
+  const [dataProvider, setDataProvider] = useState<string>("POLONEX");
 
   const [deleteExistingRuns, setDeleteExistingRuns] = React.useState(true);
 
   // streaming log related
   const [logType, setLogType] = useState<string>("TRAINING");
   const [logData, setLogData] = useState<Array<string>>([]);
-
-  // Training loop state variables
-  const [processes, setProcesses] = React.useState<string>("1");
-  const [device, setDevice] = React.useState<string>("CPU");
 
   useLayoutEffect(() => {
     const PAST_DATE = new Date();
@@ -176,6 +181,13 @@ export default function TrainOneShot() {
         numprocesses: parseInt(processes),
         deleteExistingRuns: deleteExistingRuns,
         device: device,
+        numberepochs: numberEpochs,
+        globalperiod: globalPeriod,
+        windowsize: windowSize,
+        volumeaveragedays: volumeAverageDays,
+        testportion: testPortion / 100.0,
+        numberfeatures: numberOfFeatures,
+        dataprovider: dataProvider,
       }),
     };
     setTrainingError(null);
@@ -200,6 +212,14 @@ export default function TrainOneShot() {
 
   const handleProcessNumberChange = (event: SelectChangeEvent) => {
     setProcesses(event.target.value);
+  };
+
+  const handleDataProviderChange = (event: SelectChangeEvent) => {
+    setDataProvider(event.target.value);
+  };
+
+  const handleGlobalPeriodChange = (event: SelectChangeEvent) => {
+    setGlobalPeriod(event.target.value);
   };
 
   const handleDeviceTypeChange = (event: SelectChangeEvent) => {
@@ -229,7 +249,7 @@ export default function TrainOneShot() {
               onChange={(date: Date | null) => {
                 setStartTrainDate(date);
               }}
-              renderInput={(params) => <TextField {...params} />}
+              renderInput={(params) => <TextField sx={{ width: "150px" }} {...params} />}
             />
           </LocalizationProvider>
         </Box>
@@ -243,11 +263,11 @@ export default function TrainOneShot() {
               onChange={(date: Date | null) => {
                 setEndTrainDate(date);
               }}
-              renderInput={(params) => <TextField {...params} />}
+              renderInput={(params) => <TextField sx={{ width: "150px" }} {...params} />}
             />
           </LocalizationProvider>
         </Box>
-        <Box ml={2}>
+        <Box ml={2} mr={3}>
           <TextField
             id="coin-number"
             label="Number of Coins"
@@ -256,7 +276,7 @@ export default function TrainOneShot() {
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
               setCoinNumber(parseInt(e.target.value));
             }}
-            sx={{ width: "150px" }}
+            sx={{ width: "110px" }}
             InputLabelProps={{
               shrink: true,
             }}
@@ -296,12 +316,17 @@ export default function TrainOneShot() {
         </Box>
       </Box>
 
-      <Box mt={2} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
-        <FormControl sx={{ minWidth: 120 }}>
+      <Divider light={true} sx={{ mt: 1.5, mb: 0.5, mx: 0 }} />
+
+      <Box mt={0} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
+        <FormControl sx={{ minWidth: 110 }}>
+          <InputLabel id="num-processes-select-label"># of Processes</InputLabel>
           <Select
             value={processes}
+            labelId="num-processes-select-label"
             onChange={handleProcessNumberChange}
             displayEmpty
+            label="# of Processes"
             inputProps={{ "aria-label": "number of processes you want to start to train the network" }}
           >
             <MenuItem value="1">1</MenuItem>
@@ -309,10 +334,17 @@ export default function TrainOneShot() {
             <MenuItem value="3">3</MenuItem>
             <MenuItem value="3">4</MenuItem>
           </Select>
-          <FormHelperText># of Processes</FormHelperText>
         </FormControl>
-        <FormControl sx={{ minWidth: 120, marginLeft: 2 }}>
-          <Select value={device} onChange={handleDeviceTypeChange} displayEmpty inputProps={{ "aria-label": " device to be used to train" }}>
+        <FormControl sx={{ minWidth: 110, marginLeft: 2 }}>
+          <InputLabel id="device-select-label">Device Type</InputLabel>
+          <Select
+            value={device}
+            label="Device Type"
+            labelId="device-select-label"
+            onChange={handleDeviceTypeChange}
+            displayEmpty
+            inputProps={{ "aria-label": " device to be used to train" }}
+          >
             <MenuItem value="CPU">
               <em>CPU</em>
             </MenuItem>
@@ -320,7 +352,6 @@ export default function TrainOneShot() {
               <em>GPU</em>
             </MenuItem>
           </Select>
-          <FormHelperText>Device Type</FormHelperText>
         </FormControl>
 
         <FormControlLabel
@@ -334,7 +365,7 @@ export default function TrainOneShot() {
               inputProps={{ "aria-label": "controlled" }}
             />
           }
-          label="Delete Previous Run Instances"
+          label="Delete Prev Training Data"
         />
 
         <Box ml={2} pb={3}>
@@ -370,16 +401,143 @@ export default function TrainOneShot() {
           )}
         </Box>
       </Box>
+      <Box mt={0} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
+        <Box>
+          <TextField
+            id="num-epochs"
+            label="# Epochs"
+            type="number"
+            value={numberEpochs}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setNumberEpochs(parseInt(e.target.value));
+            }}
+            sx={{ width: "110px" }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Box>
+        <FormControl sx={{ minWidth: 110, marginLeft: 2 }}>
+          <InputLabel id="global-period-select-label">Global Period</InputLabel>
+          <Select
+            value={globalPeriod}
+            id="global-period-select-label"
+            onChange={handleProcessNumberChange}
+            displayEmpty
+            autoWidth
+            label="Global Period"
+            inputProps={{ "aria-label": "The period on which to train the model" }}
+          >
+            <MenuItem value="60">1 min</MenuItem>
+            <MenuItem value="300">5 mins</MenuItem>
+            <MenuItem value="600">10 mins</MenuItem>
+            <MenuItem value="900">15 mins</MenuItem>
+            <MenuItem value="1800">30 mins</MenuItem>
+            <MenuItem value="3600">1 hour</MenuItem>
+            <MenuItem value="14400">4 hours</MenuItem>
+            <MenuItem value="86400">1 day</MenuItem>
+          </Select>
+        </FormControl>
+        <Box>
+          <TextField
+            id="window-size"
+            label="Window Size"
+            type="number"
+            value={windowSize}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setWindowSize(parseInt(e.target.value));
+            }}
+            sx={{ width: "110px", marginLeft: 2 }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Box>
+        <Box>
+          <TextField
+            id="vol-average-days"
+            label="Volume Avg Days"
+            type="number"
+            value={volumeAverageDays}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setVolumeAverageDays(parseInt(e.target.value));
+            }}
+            sx={{ width: "110px", marginLeft: 2 }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Box>
+        <Box>
+          <TextField
+            id="test-portion"
+            label="Test Portion (%)"
+            type="number"
+            InputProps={{
+              inputProps: {
+                min: 1,
+                max: 100,
+                step: 1,
+              },
+            }}
+            value={testPortion}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setTestPortion(parseInt(e.target.value));
+            }}
+            sx={{ width: "110px", marginLeft: 2 }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Box>
+        <Box>
+          <TextField
+            id="number-features"
+            label="Number Features"
+            type="number"
+            InputProps={{
+              inputProps: {
+                min: 1,
+                max: 3,
+                step: 1,
+              },
+            }}
+            value={numberOfFeatures}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setNumberOfFeatures(parseInt(e.target.value));
+            }}
+            sx={{ width: "110px", marginLeft: 2 }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Box>
+        <FormControl sx={{ minWidth: 110, marginLeft: 2 }}>
+          <InputLabel id="data-provider-label">Data Provicer</InputLabel>
+          <Select
+            value={dataProvider}
+            id="data-provider-label"
+            onChange={handleDataProviderChange}
+            displayEmpty
+            autoWidth
+            label="Global Period"
+            inputProps={{ "aria-label": "The data provider to use" }}
+          >
+            <MenuItem value="POLONEX">POLONEX</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
       <Box mt={2}>
         <Box>
           <H2Title>Training Log Console</H2Title>
         </Box>
         <TextareaAutosize
           value={logData}
+          maxLength={1000}
           aria-label="minimum height"
           minRows={20}
           placeholder="Training Logs"
-          style={{ width: "100%", height: "calc(100vh - 500px)" }}
+          style={{ width: "100%", height: "calc(100vh - 480px)", resize: "vertical", overflow: "auto" }}
         />
       </Box>
     </Box>

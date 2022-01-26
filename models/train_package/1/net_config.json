@@ -2,7 +2,8 @@
     "agent_type": "NNAgent",
     "input": {
         "coin_number": 11,
-        "end_date": "2022-01-24",
+        "data_provider": "POLONEX",
+        "end_date": "2021-12-30",
         "fake_ratio": 1,
         "feature_number": 3,
         "global_period": 1800,
@@ -12,10 +13,10 @@
         "online": false,
         "portion_reversed": false,
         "save_memory_mode": false,
-        "start_date": "2021-12-24",
+        "start_date": "2021-11-30",
         "test_portion": 0.08,
         "volume_average_days": 30,
-        "window_size": 31
+        "window_size": 50
     },
     "layers": [
         {

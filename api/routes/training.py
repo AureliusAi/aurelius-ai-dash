@@ -127,15 +127,46 @@ def train_one_shot():
   device:str = request.json['device']
   device = device.lower()
 
+  numberepochs:str = request.json['numberepochs']
+  globalperiod:str = request.json['globalperiod']
+  windowsize:str = request.json['windowsize']
+  volumeaveragedays:str = request.json['volumeaveragedays']
+  testportion:str = request.json['testportion']
+  numberfeatures:str = request.json['numberfeatures']
+  dataprovider:str = request.json['dataprovider']
+
   # update config with overrides from UI
-  if coin_num_str != '':
+  if coin_num_str:
     config["input"]["coin_number"] = int(coin_num_str)
   
-  if startstr != '':
+  if startstr:
     config["input"]["start_date"] = startstr
 
-  if endstr != '':
+  if endstr:
     config["input"]["end_date"] = endstr
+
+  if numberepochs:
+    config["training"]["steps"] = int(numberepochs)
+
+  if globalperiod != '':
+    config["input"]["global_period"] = int(globalperiod)
+
+  if windowsize != '':
+    config["input"]["window_size"] = int(windowsize)
+
+  if volumeaveragedays != '':
+    config["input"]["volume_average_days"] = int(volumeaveragedays)
+
+  if testportion != '':
+    config["input"]["test_portion"] = float(testportion)
+
+  if numberfeatures != '':
+    config["input"]["feature_number"] = int(numberfeatures)
+
+  if dataprovider != '':
+    config["input"]["data_provider"] = dataprovider
+
+
 
   # first delete training folders, generate and then run training
 

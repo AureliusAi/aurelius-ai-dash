@@ -21,8 +21,8 @@ export const disconnectLogSocket = () => {
 export const subscribeToLog = (cb) => {
   if (!socket) return true;
   socket.on("server-msg", (msg) => {
-    console.log("Websocket event received!");
-    console.log(msg);
+    // console.log("Websocket event received!");
+    // console.log(msg);
     return cb(null, msg["data"]);
   });
 };

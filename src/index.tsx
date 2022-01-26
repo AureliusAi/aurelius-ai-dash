@@ -1,14 +1,14 @@
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import React from "react";
 import ReactDOM from "react-dom";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import "./index.css";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DashboardWrapper from "./dashboard/DashboardWrapper";
+import "./index.css";
+import Backtest from "./pages/backtest";
 import Dashboard from "./pages/dashboard";
 import Data from "./pages/data";
-import TrainOneShot from "./pages/train-one-shot";
 import OnlineMode from "./pages/online-mode";
-import Backtest from "./pages/backtest";
+import TrainOneShot from "./pages/train-one-shot";
 import reportWebVitals from "./reportWebVitals";
 
 const rootElement = document.getElementById("root");
@@ -28,6 +28,9 @@ declare module "@mui/material/styles" {
 }
 
 const mdTheme = createTheme({
+  typography: {
+    fontSize: 12,
+  },
   palette: {
     primary: {
       main: "#35a660",
@@ -36,6 +39,27 @@ const mdTheme = createTheme({
     secondary: {
       main: "#F5BD1F",
       contrastText: "#6a0dad ",
+    },
+  },
+  components: {
+    MuiButton: {
+      defaultProps: {
+        size: "small",
+        disableFocusRipple: true,
+        disableRipple: true,
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        size: "small",
+        sx: { py: 0, px: 0 },
+      },
+    },
+    MuiFormControl: {
+      defaultProps: {
+        size: "small",
+        sx: { py: 0, px: 0 },
+      },
     },
   },
 });

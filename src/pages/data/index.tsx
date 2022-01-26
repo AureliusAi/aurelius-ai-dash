@@ -331,7 +331,7 @@ export default function Data() {
                 value={startDate}
                 mask="____-__-__"
                 onChange={(date: Date | null) => setStartDate(date)}
-                renderInput={(params) => <TextField {...params} />}
+                renderInput={(params) => <TextField sx={{ width: "150px" }} {...params} />}
               />
             </LocalizationProvider>
           </Box>
@@ -343,7 +343,7 @@ export default function Data() {
                 mask="____-__-__"
                 value={endDate}
                 onChange={(date: Date | null) => setEndDate(date)}
-                renderInput={(params) => <TextField {...params} />}
+                renderInput={(params) => <TextField sx={{ width: "150px" }} {...params} />}
               />
             </LocalizationProvider>
           </Box>
