@@ -40,7 +40,7 @@ def download_historical_data():
 
   startstr:str = request.json['starttrainingdate']
   endstr:str = request.json['endtrainingdate']
-  coin_num_str:str = request.json['coin_num']
+  coin_num_str:str = request.json['coinnum']
 
   if coin_num_str == '':
     coin_num = config["input"]["coin_number"]
