@@ -118,7 +118,7 @@ function DashboardContent() {
               <MenuIcon />
             </IconButton>
             <Typography component="h1" variant="h4" color="inherit" noWrap fontFamily="LilyScriptOne" sx={{ flexGrow: 1 }}>
-              Aurelius Ai
+              Aurelius{" "}
               <BoltIcon
                 fontSize="large"
                 sx={{
@@ -127,7 +127,8 @@ function DashboardContent() {
                   pb: "0px",
                   transform: "rotate(15deg)",
                 }}
-              />
+              />{" "}
+              Ai
             </Typography>
             <IconButton color="inherit">
               <Badge badgeContent={4} color="secondary">

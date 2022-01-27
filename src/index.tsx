@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DashboardWrapper from "./dashboard/DashboardWrapper";
 import "./index.css";
 import Backtest from "./pages/backtest";
+import Models from "./pages/models";
 import Dashboard from "./pages/dashboard";
 import Data from "./pages/data";
 import OnlineMode from "./pages/online-mode";
@@ -73,6 +74,7 @@ ReactDOM.render(
             <Route path="/" element={<Dashboard />} />
             <Route path="data" element={<Data />} />
             <Route path="train-one-shot" element={<TrainOneShot />} />
+            <Route path="models" element={<Models />} />
             <Route path="backtest" element={<Backtest />} />
             <Route path="online-mode" element={<OnlineMode />} />
           </Route>

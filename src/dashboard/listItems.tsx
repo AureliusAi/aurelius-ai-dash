@@ -1,11 +1,13 @@
 import { NavLink } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import BoltIcon from "@mui/icons-material/Bolt";
+import SpeedIcon from "@mui/icons-material/Speed";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
 import OnlinePredictionIcon from "@mui/icons-material/OnlinePrediction";
 import StorageIcon from "@mui/icons-material/Storage";
 import ListItem from "@mui/material/ListItem";
+import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import ListSubheader from "@mui/material/ListSubheader";
@@ -40,10 +42,19 @@ export const mainListItems = (
       </ListItem>
     </NavLink>
 
+    <NavLink className={({ isActive }) => (isActive ? "active-nav-link" : "inactive-nav-link")} to={`/models`}>
+      <ListItem button>
+        <ListItemIcon>
+          <VideogameAssetIcon />
+        </ListItemIcon>
+        <ListItemText primary="Models and Nets" />
+      </ListItem>
+    </NavLink>
+
     <NavLink className={({ isActive }) => (isActive ? "active-nav-link" : "inactive-nav-link")} to={`/backtest`}>
       <ListItem button>
         <ListItemIcon>
-          <BoltIcon />
+          <SpeedIcon />
         </ListItemIcon>
         <ListItemText primary="Backtest" />
       </ListItem>

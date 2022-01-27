@@ -4,6 +4,7 @@ import Plot from "react-plotly.js";
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import PageHeader from "../../page-components/PageHeader";
 import Plotly, { PlotType } from "plotly.js";
+import { initiateEchoSocket, disconnectEchoSocket, subscribeToEchoedMessage, sendEchoMessage } from "../../page-components/echo_websocket";
 
 var revno: number = 0;
 
@@ -25,22 +26,25 @@ export default function Dashboard() {
 
   const echo_ws = useRef<WebSocket | null>(null);
 
-  // const btc_px_action_ws = useRef<WebSocket | null>(null);
-  // const random_walk_ws = useRef<WebSocket | null>(null);
+  /////////////////////////////////////////////////////////////////////////////
+  // Echo Webservice set up
+  /////////////////////////////////////////////////////////////////////////////
+  function onEchoKeyPressed(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      sendEchoMessage(echoText);
+    }
+  }
 
   useEffect(() => {
-    echo_ws.current = new WebSocket("ws://localhost:5000/api/ws/echo");
-    echo_ws.current.onmessage = (evt) => {
-      setEchoedBackText(evt.data);
-    };
+    initiateEchoSocket();
 
-    echo_ws.current.onopen = () => {
-      console.log("ws opened");
-    };
-    echo_ws.current.onclose = () => console.log("ws closed");
-
+    subscribeToEchoedMessage((err: string, data: string) => {
+      if (err) return;
+      console.log(data);
+      setEchoedBackText(data);
+    });
     return () => {
-      echo_ws.current?.close();
+      disconnectEchoSocket();
     };
   }, []);
 
@@ -181,13 +185,6 @@ export default function Dashboard() {
   //     random_walk_ws.current?.close();
   //   };
   // }, [random_walk_ws]);
-
-  function onEchoKeyPressed(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      echo_ws.current?.send(echoText);
-      setEchoText("");
-    }
-  }
 
   return (
     <Box>

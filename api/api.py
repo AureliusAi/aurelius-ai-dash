@@ -8,6 +8,10 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit, disconnect
 from threading import Lock
 
+import json
+import websocket
+
+
 from scipy.stats import norm
 from common.classes import BtcTickerObserver
 import common.providers as provider
@@ -72,71 +76,15 @@ def training_log():
               emit('server-msg', {'data':emit_data})
 
 
-@socket_.on('my_event', namespace='/api/ws/echo')
-def echo(message):
-  while True:
-    # data = ws.receive()
-    
-    # dt_stamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-    # print(f'\tsending back: [{dt_stamp}] {data}')
-    # ws.send(f'[{dt_stamp}] {data}')
-
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response', {'data': message['data'], 'count': session['receive_count']})
+@socket_.on('echo_event', namespace='/api/ws/echo')
+def echo(msg):
+  
+  dt_stamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+  reply_msg:str = f'{msg["message"]}'
+  print('\tsend back msg: {reply_msg}')
+  emit('echoed-msg', {'data':reply_msg})
 
 
-# @sock.route('/api/ws/random-walk')
-# def random_walk(ws):
-#   delta = 0.25
-#   dt = 2.0
-#   x = 0.0
-#   while True:
-#     x = x + norm.rvs(scale=delta**2*dt)
-#     print(x)
-#     time.sleep(1)
-#     ws.send(x)
-
-
-# @sock.route('/api/ws/btc-ticker-feed')
-# def btc_ticker_feed(ws):
-#   print('got request!!!!!!!')
-#   data = ws.receive()
-#   print('=========== Request received ========')
-#   print(data)
-#   btc_observer = BtcTickerObserver()
-#   provider.subcribe(btc_observer)
-#   while True:
-    
-#     time.sleep(5)
-#     print('sending date !!!!!!!')
-#     dt_stamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-#     ws.send(f'pong!: {dt_stamp}')
-
-
-    # px_action = btc_observer.get_latest_px()
-    # print('sending px action!: {px_action}')
-    # ws.send(px_action)
-
-
-  # btc_observer = BtcTickerObserver()
-  # btc_observer._btc_px_queue.put(1)
-  # btc_observer._btc_px_queue.put(2)
-  # btc_observer._btc_px_queue.put(3)
-  # btc_observer._btc_px_queue.put(4)
-  # while(not btc_observer._btc_px_queue.empty()):
-  #   next = btc_observer._btc_px_queue.get()
-  #   print(next)
-  #   ws.send(next)
-  # print('-------------------------------------')
-  # print('registering myself to btc px feed!!!!')
-  # print('-------------------------------------')
-  # tp.subscribe(btc_observer)
-
-  # while True:
-  #   print('waiting for next px action')
-  #   px_action = btc_observer.get_latest_px()
-  #   print('sending px action!: {px_action}')
-  #   ws.send(px_action)
 
 ###############################################################################
 # MAIN 
@@ -145,4 +93,25 @@ def echo(message):
 
 
 if __name__ == '__main__':
-    socket_.run(app, debug=True)
+  socket_.run(app, debug=True)
+
+
+
+  # websocket.enableTrace(True)
+  # btc_px_ws = websocket.WebSocketApp('wss://api.coin.z.com/ws/public/v1')
+
+  # def on_open(self):
+  #     message = {
+  #         "command": "subscribe",
+  #         "channel": "ticker",
+  #         "symbol": "BTC"
+  #     }
+  #     btc_px_ws.send(json.dumps(message))
+
+  # def on_message(self, message):
+  #     print(message)
+
+  # btc_px_ws.on_open = on_open
+  # btc_px_ws.on_message = on_message
+
+  # btc_px_ws.run_forever()
