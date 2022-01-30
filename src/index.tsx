@@ -11,6 +11,7 @@ import Data from "./pages/data";
 import OnlineMode from "./pages/online-mode";
 import TrainOneShot from "./pages/train-one-shot";
 import reportWebVitals from "./reportWebVitals";
+import Networks from "./pages/models/networks";
 
 const rootElement = document.getElementById("root");
 
@@ -75,6 +76,7 @@ ReactDOM.render(
             <Route path="data" element={<Data />} />
             <Route path="train-one-shot" element={<TrainOneShot />} />
             <Route path="models" element={<Models />} />
+            <Route path="networks" element={<Models />} />
             <Route path="backtest" element={<Backtest />} />
             <Route path="online-mode" element={<OnlineMode />} />
           </Route>
