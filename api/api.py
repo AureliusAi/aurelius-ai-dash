@@ -19,6 +19,7 @@ import common.providers as provider
 # import all the pages
 from routes.data import data_pages
 from routes.training import training_pages
+from routes.config import config_pages
 
 tz = pytz.timezone('Asia/Tokyo')
 
@@ -29,6 +30,7 @@ app.config['SECRET_KEY'] = 'shhhhhhh!'
 cors = CORS(app)
 app.register_blueprint(data_pages)
 app.register_blueprint(training_pages)
+app.register_blueprint(config_pages)
 
 #socket_ = SocketIO(app, async_mode=None)
 # |cors_allowed_origins| is required for localhost testing.
