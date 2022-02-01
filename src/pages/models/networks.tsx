@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
-import PageHeader, { H2Title } from "../../page-components/PageHeader";
+import { H2Title } from "../../page-components/PageHeader";
 import AddIcon from "@mui/icons-material/Add";
 import { AgGridReact, AgGridColumn } from "ag-grid-react";
 import "ag-grid-enterprise";
@@ -20,6 +20,10 @@ function Networks() {
   const [modelData, setModelData] = useState(null);
   const [gridApi, setGridApi] = useState(null);
 
+  const [instData, setInstData] = useState(null);
+  const [nnDataRetError, setNNDataRetError] = useState(null);
+  const [nnNDataRetLoading, setNNDataRetLoading] = useState<boolean>(false);
+
   const [newInstanceName, setNewInstanceName] = useState<string>("");
   const [newInstanceDef, setNewInstanceDef] = useState<string>("");
   const [isCreatingNewInstance, setCreatingNewInstance] = useState<boolean>(false);
@@ -33,32 +37,32 @@ function Networks() {
     setCreateNewOpen(false);
   };
 
-  const rowData = [
-    {
-      instance_name: "Default CNN",
-      version: 2.0,
-      nn_definition: `[
-      {"filter_shape": [1, 2], "filter_number": 3, "type": "ConvLayer"},
-      {"filter_number":10, "type": "EIIE_Dense", "regularizer": "L2", "weight_decay": 5e-9},
-      {"type": "EIIE_Output_WithW","regularizer": "L2", "weight_decay": 5e-8}
-]`,
-      creation_date: "2022-01-29 12:00:00",
-      created_by: "system",
-      updatedAt: "2022-01-29 23:34:00",
-    },
-    {
-      instance_name: "Resnet 1.0",
-      version: 1.0,
-      nn_definition: `[
-      {"filter_shape": [1, 2], "filter_number": 3, "type": "ConvLayer"},
-      {"filter_number":10, "type": "EIIE_Dense", "regularizer": "L2", "weight_decay": 5e-9},
-      {"type": "EIIE_Output_WithW","regularizer": "L2", "weight_decay": 5e-8}
-]`,
-      creation_date: "2022-01-30 12:00:00",
-      created_by: "system",
-      updatedAt: "2022-01-30 23:34:00",
-    },
-  ];
+  //   const rowData = [
+  //     {
+  //       instance_name: "Default CNN",
+  //       version: 2.0,
+  //       nn_definition: `[
+  //       {"filter_shape": [1, 2], "filter_number": 3, "type": "ConvLayer"},
+  //       {"filter_number":10, "type": "EIIE_Dense", "regularizer": "L2", "weight_decay": 5e-9},
+  //       {"type": "EIIE_Output_WithW","regularizer": "L2", "weight_decay": 5e-8}
+  // ]`,
+  //       creation_date: "2022-01-29 12:00:00",
+  //       created_by: "system",
+  //       updatedAt: "2022-01-29 23:34:00",
+  //     },
+  //     {
+  //       instance_name: "Resnet 1.0",
+  //       version: 1.0,
+  //       nn_definition: `[
+  //       {"filter_shape": [1, 2], "filter_number": 3, "type": "ConvLayer"},
+  //       {"filter_number":10, "type": "EIIE_Dense", "regularizer": "L2", "weight_decay": 5e-9},
+  //       {"type": "EIIE_Output_WithW","regularizer": "L2", "weight_decay": 5e-8}
+  // ]`,
+  //       creation_date: "2022-01-30 12:00:00",
+  //       created_by: "system",
+  //       updatedAt: "2022-01-30 23:34:00",
+  //     },
+  //   ];
 
   const NetworkDataTableColDefs = [
     { headerName: "Instance Name", field: "instance_name", cellRenderer: "agGroupCellRenderer", cellStyle: { "font-weight": "bold" } },
@@ -71,6 +75,43 @@ function Networks() {
   const onGridReady = (param: any) => {
     setGridApi(param.api);
   };
+
+  const refreshNNFromDB = () => {
+    setNNDataRetError(null);
+    setNNDataRetLoading(true);
+    fetch(`${API_CONFIG_ENDPOINT}/nn/get-all`)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          let json_body = JSON.parse(result.nn_instances);
+          for (var i = 0; i < json_body.length; i++) {
+            var obj = json_body[i];
+            obj["nn_definition"] = obj["nn_definition"]
+              .replace(/\\"/g, '"')
+              .replace(/\\n/g, "\n")
+              .replace(/\\t/g, "\t")
+              .replace(/(^"|"$)/g, "");
+          }
+          setInstData(json_body);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setNNDataRetError(error);
+        }
+      )
+      .catch((error) => {
+        // handle the error
+      })
+      .finally(() => {
+        setNNDataRetLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    refreshNNFromDB();
+  }, []);
 
   const onCreateNewNN = (event: React.MouseEvent) => {
     // get the name and contents
@@ -91,7 +132,14 @@ function Networks() {
       .then((res) => res.json())
       .then(
         (result) => {
+          console.log(result);
           console.log("Saved new instance!!!! Refreshing all instances");
+          if (result["is_error"]) {
+            setSaveNewInstanceError(result["error_msg"]);
+          } else {
+            setCreateNewOpen(false);
+            refreshNNFromDB();
+          }
         },
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
@@ -114,28 +162,37 @@ function Networks() {
     <Box sx={{ p: 0, m: 0 }}>
       <Box display="flex" sx={{ justifyContent: "space-between", mb: 1 }}>
         <H2Title>Networks</H2Title>
-        <Button size="small" onClick={initiateCreateNewNN} variant="contained" startIcon={<AddIcon />}>
-          Create New Neural Net
-        </Button>
+        {nnNDataRetLoading ? (
+          <span />
+        ) : (
+          <Button size="small" onClick={initiateCreateNewNN} variant="contained" startIcon={<AddIcon />}>
+            Create New Neural Net
+          </Button>
+        )}
       </Box>
-      <div className="ag-theme-balham" style={{ height: "calc(100vh - 250px)", width: "100%" }}>
-        <AgGridReact
-          rowData={rowData}
-          columnDefs={NetworkDataTableColDefs}
-          defaultColDef={{
-            sortable: true,
-            editable: true,
-            filter: true,
-            flex: 1,
-            floatingFilter: true,
-          }}
-          detailRowAutoHeight={true}
-          masterDetail={true}
-          detailCellRenderer={"networkDetailsRenderer"}
-          frameworkComponents={{ networkDetailsRenderer: NetworkDetailsRenderer }}
-          onGridReady={onGridReady}
-        ></AgGridReact>
-      </div>
+
+      {nnNDataRetLoading ? (
+        <Box />
+      ) : (
+        <div className="ag-theme-balham" style={{ height: "calc(100vh - 250px)", width: "100%" }}>
+          <AgGridReact
+            rowData={instData}
+            columnDefs={NetworkDataTableColDefs}
+            defaultColDef={{
+              sortable: true,
+              editable: true,
+              filter: true,
+              flex: 1,
+              floatingFilter: true,
+            }}
+            detailRowAutoHeight={true}
+            masterDetail={true}
+            detailCellRenderer={"networkDetailsRenderer"}
+            frameworkComponents={{ networkDetailsRenderer: NetworkDetailsRenderer }}
+            onGridReady={onGridReady}
+          ></AgGridReact>
+        </div>
+      )}
 
       <Dialog open={openCreateNew} onClose={handleCreateNewClose} maxWidth="sm" fullWidth>
         <DialogTitle>Create New Neural Network</DialogTitle>
@@ -165,6 +222,11 @@ function Networks() {
             style={{ width: "100%" }}
           />
         </DialogContent>
+        {saveNewInstanceError && (
+          <Box px={3} style={{ color: "#FF3333" }}>
+            <strong>Save error:</strong> {saveNewInstanceError}
+          </Box>
+        )}
         <DialogActions>
           <Button onClick={handleCreateNewClose}>Cancel</Button>
           <LoadingButton loading={isCreatingNewInstance} variant="contained" onClick={onCreateNewNN}>
