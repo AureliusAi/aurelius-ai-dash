@@ -8,15 +8,28 @@ import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
+import OutlinedInput from "@mui/material/OutlinedInput";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import TextField from "@mui/material/TextField";
 import React, { ChangeEvent, useEffect, useLayoutEffect, useState } from "react";
-import { API_TRAINING_ENDPOINT } from "../../endpoints";
+import { API_CONFIG_ENDPOINT, API_TRAINING_ENDPOINT } from "../../endpoints";
 import { disconnectLogSocket, initiateLogSocket, subscribeToLog } from "../../page-components/log_sockets";
 import PageHeader, { H2Title } from "../../page-components/PageHeader";
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 export default function TrainOneShot() {
   const theme = useTheme();
@@ -45,6 +58,10 @@ export default function TrainOneShot() {
   const [testPortion, setTestPortion] = useState<number>(8);
   const [numberOfFeatures, setNumberOfFeatures] = useState<number>(3);
   const [dataProvider, setDataProvider] = useState<string>("POLONEX");
+  const [availNNs, setAvailNNs] = useState<string[] | null>(null);
+  const [retrieveNNError, setRetrieveNNError] = useState<string | null>(null);
+  const [retrievingNNsRunning, setRetrievingNNsRunning] = useState<boolean>(false);
+  const [nnToGet, setNNToGet] = useState<string>("");
 
   const [deleteExistingRuns, setDeleteExistingRuns] = React.useState(true);
 
@@ -56,6 +73,10 @@ export default function TrainOneShot() {
     const PAST_DATE = new Date();
     PAST_DATE.setMonth(PAST_DATE.getMonth() - 1);
     setStartTrainDate(PAST_DATE);
+  }, []);
+
+  useLayoutEffect(() => {
+    get_list_of_avail_nns();
   }, []);
 
   useEffect(() => {
@@ -75,6 +96,29 @@ export default function TrainOneShot() {
       disconnectLogSocket();
     };
   }, [logType]);
+
+  const get_list_of_avail_nns = () => {
+    setRetrieveNNError(null);
+    setRetrievingNNsRunning(true);
+    fetch(`${API_CONFIG_ENDPOINT}/nn/get-names-list`)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          setAvailNNs(result["nn_list"]);
+          console.log(result["nn_list"]);
+          setRetrievingNNsRunning(false);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setRetrieveNNError(error);
+        }
+      )
+      .finally(() => {
+        setRetrievingNNsRunning(false);
+      });
+  };
 
   function get_training_start_date() {
     let startdtstr = "";
@@ -226,6 +270,13 @@ export default function TrainOneShot() {
     setDevice(event.target.value);
   };
 
+  const handleNNSelectionChanged = (event: SelectChangeEvent<typeof nnToGet>) => {
+    const {
+      target: { value },
+    } = event;
+    setNNToGet(value);
+  };
+
   return (
     <Box>
       <PageHeader>Train One Shot</PageHeader>
@@ -353,6 +404,28 @@ export default function TrainOneShot() {
             </MenuItem>
           </Select>
         </FormControl>
+
+        <Box ml={2}>
+          <FormControl sx={{ width: 235 }}>
+            <InputLabel id="demo-multiple-checkbox-label">Neural Network</InputLabel>
+            <Select
+              labelId="demo-multiple-checkbox-label"
+              id="demo-multiple-checkbox"
+              value={nnToGet}
+              onChange={handleNNSelectionChanged}
+              input={<OutlinedInput label="Tag" />}
+              renderValue={(selected) => selected}
+              MenuProps={MenuProps}
+            >
+              {availNNs &&
+                availNNs.map((nn) => (
+                  <MenuItem key={nn} value={nn}>
+                    <ListItemText primary={nn} />
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        </Box>
 
         <FormControlLabel
           sx={{ marginLeft: 2 }}

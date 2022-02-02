@@ -9,6 +9,36 @@ from common.db import SqliteDataDB
 config_pages = Blueprint("config", __name__)
 
 
+@config_pages.get("/api/config/nn/get-names-list")
+def get_avail_nn_names():
+  """
+  Retrieves a list of only the names of live NNs from NN_Config
+  """
+
+  nn_list = []
+
+  db = SqliteDataDB()
+  qry = f"""
+    select `Name` as instance_name, `Version` as version, UpdateDate
+    from Config_NN main
+    inner join (
+      select `Name` as mName, max(`Version`) as mVersion, isDeleted as maxIsDeleted , UpdateDate as mUpdateDate 
+	  from Config_NN
+      Group by `Name`
+    ) maxv on main.Name = maxv.mName and main.Version = maxv.mVersion and  main.UpdateDate = maxv.mUpdateDate
+    Where maxIsDeleted = 0
+    Order by `Name`
+  """
+  print(f'get all NN instances: {qry}')
+  df = db.qry_read_data(qry)
+  nn_list = df['instance_name'].unique().tolist()
+
+  res = dict()
+  res['nn_list'] = nn_list
+
+  return res
+
+
 @config_pages.get("/api/config/nn/get-all")
 def get_all_nn_instances():
   db = SqliteDataDB()
@@ -16,9 +46,10 @@ def get_all_nn_instances():
     select `Name` as instance_name, `Version` as version, `CreateUser` as created_by, 
     `Definition` as nn_definition, `CreateDate` as creation_date, `UpdateDate` as updatedAt from Config_NN main
     inner join (
-      select `Name` as mName, max(`Version`) as mVersion, max(`UpdateDate`) as mUpdateDate from Config_NN
+      select `Name` as mName, max(`Version`) as mVersion, max(`UpdateDate`) as mUpdateDate, isDeleted as maxIsDeleted from Config_NN
       Group by `Name`
     ) maxv on main.Name = maxv.mName and main.Version = maxv.mVersion and  main.UpdateDate = maxv.mUpdateDate
+    Where maxIsDeleted = 0
     Order by `UpdateDate` desc
   """
   print(f'get all NN instances: {qry}')
@@ -89,7 +120,8 @@ def delete_nn_instance():
 
   db = SqliteDataDB()
   qry = f"""
-    delete from Config_NN 
+    update from Config_NN 
+    set IsDeleted = 1
     where `Name` = '{inst_name}'
     and `Version` = '{inst_version}'
   """
