@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import LoadingButton from "@mui/lab/LoadingButton";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import TextareaAutosize from "@mui/material/TextareaAutosize";
-import { H2Title } from "../../page-components/PageHeader";
-import AddIcon from "@mui/icons-material/Add";
-import { AgGridReact, AgGridColumn } from "ag-grid-react";
-import "ag-grid-enterprise";
-import NetworkDetailsRenderer from "./networkDetailsRenderer";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import TextareaAutosize from "@mui/material/TextareaAutosize";
+import TextField from "@mui/material/TextField";
+import "ag-grid-enterprise";
+import { AgGridReact } from "ag-grid-react";
+import React, { useEffect, useState } from "react";
 import { API_CONFIG_ENDPOINT } from "../../endpoints";
-import LoadingButton from "@mui/lab/LoadingButton";
+import { H2Title } from "../../page-components/PageHeader";
+import NetworkDetailsRenderer from "./networkDetailsRenderer";
 
 function Networks() {
   const [modelData, setModelData] = useState(null);
@@ -65,7 +65,7 @@ function Networks() {
   //   ];
 
   const NetworkDataTableColDefs = [
-    { headerName: "Instance Name", field: "instance_name", cellRenderer: "agGroupCellRenderer", cellStyle: { "font-weight": "bold" } },
+    { headerName: "Instance Name", field: "instance_name", cellRenderer: "agGroupCellRenderer", cellStyle: { fontWeight: "bold" } },
     { headerName: "Version", field: "version", maxWidth: 95, editable: false },
     { headerName: "Creation Time", field: "creation_date" },
     { headerName: "Created By", field: "created_by" },
@@ -158,6 +158,8 @@ function Networks() {
     setCreateNewOpen(true);
   };
 
+  const getRowNodeId = (data: any) => data.instance_name;
+
   return (
     <Box sx={{ p: 0, m: 0 }}>
       <Box display="flex" sx={{ justifyContent: "space-between", mb: 1 }}>
@@ -177,6 +179,7 @@ function Networks() {
         <div className="ag-theme-balham" style={{ height: "calc(100vh - 250px)", width: "100%" }}>
           <AgGridReact
             rowData={instData}
+            getRowNodeId={getRowNodeId}
             columnDefs={NetworkDataTableColDefs}
             defaultColDef={{
               sortable: true,
@@ -187,6 +190,10 @@ function Networks() {
             }}
             detailRowAutoHeight={true}
             masterDetail={true}
+            enableCellChangeFlash={true}
+            detailCellRendererParams={{
+              refreshStrategy: "everything",
+            }}
             detailCellRenderer={"networkDetailsRenderer"}
             frameworkComponents={{ networkDetailsRenderer: NetworkDetailsRenderer }}
             onGridReady={onGridReady}
@@ -194,7 +201,7 @@ function Networks() {
         </div>
       )}
 
-      <Dialog open={openCreateNew} onClose={handleCreateNewClose} maxWidth="sm" fullWidth>
+      <Dialog open={openCreateNew} onClose={handleCreateNewClose} maxWidth="md" fullWidth>
         <DialogTitle>Create New Neural Network</DialogTitle>
         <DialogContent>
           <DialogContentText>Enter the details of the new Neural Network</DialogContentText>

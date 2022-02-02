@@ -45,3 +45,35 @@ class SqliteDataDB:
       conn.commit()
 
       return isError, errorTxt
+
+
+  def update_or_delete_data(self, sql:str):
+    """delete/update data in the SQL DB
+
+    Args:
+        sql (str): the sql statement containing delete/update statement
+
+    Returns:
+        [type]: err
+    """
+    with sqlite3.connect(self.DATABASE_DIR, timeout=10) as conn:
+
+      cursor = conn.cursor()
+      isError: bool = False
+      errorTxt: str = ""
+      updated_rows = -1
+      try:
+        cursor.execute(sql)
+        conn.commit()
+        row_count = cursor.rowcount
+        print('update or delete row count: ' + str(row_count))
+        updated_rows = row_count
+        cursor.close()
+
+      except sqlite3.Error as e:
+        print(e)
+        isError = True
+        errorTxt = str(e)
+        cursor.close()
+
+      return updated_rows, isError, errorTxt

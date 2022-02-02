@@ -14,11 +14,11 @@ const AlertDialog: React.FC = () => {
   const { title, bodyText, okBtnText, closeBtnText, onSubmit, close } = useAlertDialogStore();
 
   return (
-    <Dialog open={Boolean(onSubmit)} onClose={close} maxWidth="sm" fullWidth>
+    <Dialog open={Boolean(onSubmit)} onClose={close} maxWidth="md" fullWidth>
       <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
       <Box position="absolute" top={0} right={0}>
-        <IconButton>
-          <Close onClick={close} />
+        <IconButton onClick={close}>
+          <Close />
         </IconButton>
       </Box>
       <DialogContent>
