@@ -36,6 +36,7 @@ export default function TrainOneShot() {
 
   // Status related variables
   const [dateRangeError, setDateRangeError] = useState<string | null>(null);
+  const [nnNotSetError, setNnNotSetError] = useState<string | null>(null);
 
   const [isTrainingRunning, setTrainingRunning] = useState<boolean>(false);
   const [trainingError, setTrainingError] = useState<string | null>(null);
@@ -202,7 +203,13 @@ export default function TrainOneShot() {
       });
   }
 
-  function onRunOneShotTrainging(event: React.MouseEvent) {
+  function onRunOneShotTraining(event: React.MouseEvent) {
+    // check the NN is selected
+    if (!nnToGet) {
+      setDateRangeError("Please select a Neural Network to run");
+      return;
+    }
+
     let startdtstr = get_training_start_date();
     let enddtstr = get_training_end_date();
 
@@ -232,6 +239,7 @@ export default function TrainOneShot() {
         testportion: testPortion / 100.0,
         numberfeatures: numberOfFeatures,
         dataprovider: dataProvider,
+        nn: nnToGet,
       }),
     };
     setTrainingError(null);
@@ -275,6 +283,9 @@ export default function TrainOneShot() {
       target: { value },
     } = event;
     setNNToGet(value);
+    if (value) {
+      setNnNotSetError(null);
+    }
   };
 
   return (
@@ -369,7 +380,7 @@ export default function TrainOneShot() {
 
       <Divider light={true} sx={{ mt: 1.5, mb: 0.5, mx: 0 }} />
 
-      <Box mt={0} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
+      <Box mt={2} mb={2} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
         <FormControl sx={{ minWidth: 110 }}>
           <InputLabel id="num-processes-select-label"># of Processes</InputLabel>
           <Select
@@ -407,7 +418,7 @@ export default function TrainOneShot() {
 
         <Box ml={2}>
           <FormControl sx={{ width: 235 }}>
-            <InputLabel id="demo-multiple-checkbox-label">Neural Network</InputLabel>
+            <InputLabel id="demo-multiple-checkbox-label">Select Neural Network</InputLabel>
             <Select
               labelId="demo-multiple-checkbox-label"
               id="demo-multiple-checkbox"
@@ -441,16 +452,16 @@ export default function TrainOneShot() {
           label="Delete Prev Training Data"
         />
 
-        <Box ml={2} pb={3}>
-          {dateRangeError ? (
-            <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>
-          ) : (
+        <Box ml={2}>
+          {dateRangeError && <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>}
+          {nnNotSetError && <Box sx={{ color: "#FF3333" }}>{nnNotSetError}</Box>}
+          {dateRangeError == null && nnNotSetError == null && (
             <Box>
               {isDataDownloadRunning ? (
                 <span />
               ) : (
-                <Box sx={{ alignItems: "center" }} display="flex" mt={2}>
-                  <LoadingButton loading={isTrainingRunning} onClick={onRunOneShotTrainging} variant="contained">
+                <Box sx={{ alignItems: "center" }} display="flex">
+                  <LoadingButton loading={isTrainingRunning} onClick={onRunOneShotTraining} variant="contained">
                     Train One Shot
                   </LoadingButton>
 

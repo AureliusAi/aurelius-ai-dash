@@ -67,9 +67,10 @@ def update_nn_instance():
   inst_definition:str = request.json['instance_definition_to_update']
 
   # first get the latest version and user
+  # note because we are creating a new entry in the DB, we need to get the Create Date because we want to keep the orginal
   db = SqliteDataDB()
   qry = f"""
-    select `Name` as instance_name, `Version` as version, `CreateUser` as created_by
+    select `Name` as instance_name, `Version` as version, `CreateUser` as created_by, `CreateDate` as created_date
     from Config_NN main
     inner join (
       select `Name` as mName, max(`Version`) as mVersion, max(`UpdateDate`) as mUpdateDate from Config_NN
@@ -81,12 +82,13 @@ def update_nn_instance():
   """
   df_existing= db.qry_read_data(qry)
   next_ver: int = int(df_existing['version'].values[0]) + 1
-  create_user: str = df_existing['created_by'].values[0]
+  created_user: str = df_existing['created_by'].values[0]
+  created_date: str = df_existing['created_date'].values[0]
 
   db = SqliteDataDB()
   input_list = []
-  input_list.append((inst_name, next_ver, inst_definition, create_user))
-  is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Version, Definition, CreateUser) VALUES (?,?,?,?)", input_list)
+  input_list.append((inst_name, next_ver, inst_definition, created_date, created_user))
+  is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Version, Definition, CreateDate, CreateUser) VALUES (?, ?, ?, ?, ?)", input_list)
   
   db = SqliteDataDB()
   qry = f"""
@@ -105,7 +107,7 @@ def update_nn_instance():
   res['Name'] = inst_name
   res['Version'] = next_ver
   res['Definition'] = inst_definition
-  res['CreateUser'] = create_user
+  res['CreateUser'] = created_user
   res['CreateDate'] = create_date
   res['UpdateDate'] = update_date
 

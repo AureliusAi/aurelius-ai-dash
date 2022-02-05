@@ -135,6 +135,8 @@ def train_one_shot():
   numberfeatures:str = request.json['numberfeatures']
   dataprovider:str = request.json['dataprovider']
 
+  nn: str = request.json['nn']
+
   # update config with overrides from UI
   if coin_num_str:
     config["input"]["coin_number"] = int(coin_num_str)

@@ -17,6 +17,8 @@ import * as React from "react";
 import { Outlet } from "react-router-dom";
 import Copyright from "../page-components/Copyright";
 import { mainListItems, secondaryListItems } from "./listItems";
+import logo_aa_circle_128 from "../assets/logoAACircle128.png";
+import logo_aa_square_128 from "../assets/logoAASquare128.png";
 
 const drawerWidth: number = 240;
 
@@ -119,15 +121,7 @@ function DashboardContent() {
             </IconButton>
             <Typography component="h1" variant="h4" color="inherit" noWrap fontFamily="LilyScriptOne" sx={{ flexGrow: 1 }}>
               Aurelius{" "}
-              <BoltIcon
-                fontSize="large"
-                sx={{
-                  pt: "10px",
-                  ml: "5px",
-                  pb: "0px",
-                  transform: "rotate(15deg)",
-                }}
-              />{" "}
+              <img height={32} style={{ marginLeft: "1px", marginRight: "5px", paddingTop: "5px" }} src={logo_aa_circle_128} className="App-logo" alt="logo" />
               Ai
             </Typography>
             <IconButton color="inherit">
