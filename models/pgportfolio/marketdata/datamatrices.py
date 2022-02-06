@@ -14,7 +14,7 @@ MIN_NUM_PERIOD = 3
 
 class DataMatrices:
     def __init__(self, start, end, period, batch_size=50, volume_average_days=30, buffer_bias_ratio=0,
-                 market="poloniex", coin_filter=1, window_size=50, feature_number=3, test_portion=0.15,
+                 data_provider="POLONIEX", coin_filter=1, window_size=50, feature_number=3, test_portion=0.15,
                  portion_reversed=False, online=False, is_permed=False):
         """
 
@@ -49,7 +49,7 @@ class DataMatrices:
         self.__history_manager = gdm.HistoryManager(coin_number=coin_filter, end=self.__end,
                                                     volume_average_days=volume_average_days,
                                                     volume_forward=volume_forward, online=online)
-        if market == "poloniex":
+        if data_provider.upper() == "POLONIEX":
             self.__global_data = self.__history_manager.get_global_panel(start,
                                                                          self.__end,
                                                                          period=period,
@@ -61,7 +61,7 @@ class DataMatrices:
             global_data_as_array = global_data_as_array.transpose(2, 0, 1)
             self.__global_data_array =  np.array(global_data_as_array)
         else:
-            raise ValueError("market {} is not valid".format(market))
+            raise ValueError("market {} is not valid".format(data_provider))
         self.__period_length = period
         # portfolio vector memory, [time, assets]
         logging.info(f'Data Frame: level(0) = {self.__global_data.index.get_level_values(0).unique()}')
@@ -114,7 +114,7 @@ class DataMatrices:
         end = parse_time(input_config["end_date"])
         return DataMatrices(start=start,
                             end=end,
-                            market=input_config["market"],
+                            data_provider=input_config["data_provider"],
                             feature_number=input_config["feature_number"],
                             window_size=input_config["window_size"],
                             online=input_config["online"],

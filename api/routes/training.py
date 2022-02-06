@@ -16,6 +16,68 @@ from models.pgportfolio.tools.configprocess import preprocess_config
 training_pages = Blueprint("training", __name__)
 
 
+@training_pages.post("/api/training/check-and-retrieve-hist-data")
+def check_and_download_historical_data():
+  """
+
+  Gets historical data given start/end dates and all the overrides 
+  to the DataMatricies constructor
+
+  Returns:
+      JSON: object describing the status and result of the operation
+  """
+
+  from models.pgportfolio.marketdata.datamatrices import DataMatrices
+  logging.basicConfig(level=logging.INFO)
+
+  logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+  logging.info("@training_pages.post(/api/training/check-and-retrieve-hist-data)")
+  logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+  startstr:str = request.json['starttrainingdate']
+  endstr:str = request.json['endtrainingdate']
+  coin_num_str:str = request.json['coinnum']
+  period:str = request.json['globalperiod']
+  window_size:str = request.json['windowsize']
+  volume_average_days:str = request.json['volumeaveragedays']
+  feature_number:str = request.json['numberfeatures']
+  data_provider:str = request.json['dataprovider']
+  test_portion:str = request.json['testportion']
+
+  coin_num = int(coin_num_str)
+  startdate_dt = dateutil.parser.isoparse(startstr)
+  start = int(time.mktime(startdate_dt.timetuple()))
+  enddate_dt = dateutil.parser.isoparse(endstr)
+  end = int(time.mktime(enddate_dt.timetuple()))
+  period = int(period)
+  volume_average_days = int(volume_average_days)
+  feature_number = int(feature_number)
+  window_size = int(window_size)
+  test_portion = float(test_portion)
+  
+  # get net_config.json to use as a base
+  with open("models/pgportfolio/net_config.json") as file:
+    config = json.load(file)
+
+  config = preprocess_config(config)
+
+  logging.info(f'start date: {start}')
+  logging.info(f'end date: {end}')
+  DataMatrices(start=start,
+                end=end,
+                feature_number=feature_number,
+                online=True,
+                period=period,
+                volume_average_days=volume_average_days,
+                coin_filter=coin_num,
+                is_permed=config["input"]["is_permed"],
+                test_portion=test_portion,
+                portion_reversed=config["input"]["portion_reversed"],
+                dataprovider=data_provider)
+
+  return { "status_msg": f"Successfully downloaded historic data from {startstr} to {endstr}", "status_code": "OK"}
+
+
 @training_pages.post("/api/training/get-historical-data")
 def download_historical_data():
   """

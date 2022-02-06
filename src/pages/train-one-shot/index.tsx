@@ -84,6 +84,10 @@ export default function TrainOneShot() {
     checkDateDiff();
   }, [startTrainDate, endTrainDate]);
 
+  // useEffect(() => {
+  //   checkDateDiff();
+  // }, [nnNotSetError]);
+
   useEffect(() => {
     if (logType) initiateLogSocket(logType);
 
@@ -203,25 +207,43 @@ export default function TrainOneShot() {
       });
   }
 
-  function onRunOneShotTraining(event: React.MouseEvent) {
-    // check the NN is selected
-    if (!nnToGet) {
-      setDateRangeError("Please select a Neural Network to run");
-      return;
-    }
+  const check_and_get_historic_data = (startdtstr: string, enddtstr: string) => {
+    const options = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        coinnum: coinNumber,
+        starttrainingdate: startdtstr,
+        endtrainingdate: enddtstr,
+        globalperiod: globalPeriod,
+        windowsize: windowSize,
+        volumeaveragedays: volumeAverageDays,
+        numberfeatures: numberOfFeatures,
+        dataprovider: dataProvider,
+        testportion: testPortion,
+      }),
+    };
+    setTrainingError(null);
+    setTrainingRunning(true);
+    fetch(`${API_TRAINING_ENDPOINT}/check-and-retrieve-hist-data`, options)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          console.log(result);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setTrainingError(error);
+        }
+      )
+      .finally(() => {
+        setTrainingRunning(false);
+      });
+  };
 
-    let startdtstr = get_training_start_date();
-    let enddtstr = get_training_end_date();
-
-    let num_days_diff = checkNumDaysBetweenYYYYMMDD(enddtstr, startdtstr);
-
-    console.log("num_days_diff: " + num_days_diff);
-
-    if (num_days_diff <= 0) {
-      setDateRangeError("Must be at least 1 month between Start and End Training dates");
-      return;
-    }
-
+  const kick_off_training = (startdtstr: string, enddtstr: string) => {
     const trainOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -260,6 +282,33 @@ export default function TrainOneShot() {
       .finally(() => {
         setTrainingRunning(false);
       });
+  };
+
+  function onRunOneShotTraining(event: React.MouseEvent) {
+    // check we have all the input params set
+
+    // 1. check the NN is selected
+    if (!nnToGet) {
+      setNnNotSetError("Please select a Neural Network to run");
+      return;
+    }
+
+    // 2. check the date between start and end is at least 1 month
+    let startdtstr: string = get_training_start_date();
+    let enddtstr: string = get_training_end_date();
+    let num_days_diff = checkNumDaysBetweenYYYYMMDD(enddtstr, startdtstr);
+    if (num_days_diff <= 0) {
+      setDateRangeError("Must be at least 1 month between Start and End Training dates");
+      return;
+    }
+
+    // 3. check other params (epochs etc. defaults are filled in so can't make a big mistake)
+
+    // 4. After params are confirmed first check the data is available
+    check_and_get_historic_data(startdtstr, enddtstr);
+
+    // 5. Run the actual training
+    kick_off_training(startdtstr, enddtstr);
   }
 
   const handleProcessNumberChange = (event: SelectChangeEvent) => {
@@ -284,7 +333,10 @@ export default function TrainOneShot() {
     } = event;
     setNNToGet(value);
     if (value) {
+      console.log("setting NN value to: " + value);
       setNnNotSetError(null);
+    } else {
+      setNnNotSetError("Please select a Neural Network to run");
     }
   };
 
@@ -453,8 +505,8 @@ export default function TrainOneShot() {
         />
 
         <Box ml={2}>
-          {dateRangeError && <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>}
           {nnNotSetError && <Box sx={{ color: "#FF3333" }}>{nnNotSetError}</Box>}
+          {dateRangeError && <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>}
           {dateRangeError == null && nnNotSetError == null && (
             <Box>
               {isDataDownloadRunning ? (
