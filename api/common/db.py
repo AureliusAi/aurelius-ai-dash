@@ -9,8 +9,14 @@ class SqliteDataDB:
 
   def qry_read_data(self, sql:str, parse_dates_cols:list=None, index_col:str=None):
     with sqlite3.connect(self.DATABASE_DIR) as connection:
-      df = pd.read_sql_query(sql, con=connection, parse_dates=parse_dates_cols, index_col=index_col)
-      return df
+      error_msg: str = ""
+      try:
+        df = pd.read_sql_query(sql, con=connection, parse_dates=parse_dates_cols, index_col=index_col)
+      except sqlite3.Error as err:
+        error_msg = err.message
+        return None, error_msg
+      
+      return df, error_msg
 
   def insert_bulk_data(self, sql:str, input_list:list):
     """Insert data into the SQL DB

@@ -30,7 +30,13 @@ def get_avail_nn_names():
     Order by `Name`
   """
   print(f'get all NN instances: {qry}')
-  df = db.qry_read_data(qry)
+  df, error_msg = db.qry_read_data(qry)
+  if df is None:
+    res = dict()
+    res['nn_list'] = []
+    res['error_msg'] = error_msg
+    return res
+    
   nn_list = df['instance_name'].unique().tolist()
 
   res = dict()
@@ -53,7 +59,12 @@ def get_all_nn_instances():
     Order by `UpdateDate` desc
   """
   print(f'get all NN instances: {qry}')
-  df = db.qry_read_data(qry)
+  df, error_msg = db.qry_read_data(qry)
+  if df is None:
+    res = dict()
+    res['nn_instances'] = []
+    res['error_msg'] = error_msg
+    return res
   
   res = dict()
   res['nn_instances'] = df.to_json(orient="records")
@@ -80,7 +91,13 @@ def update_nn_instance():
     Order by `UpdateDate` desc
     LIMIT 1
   """
-  df_existing= db.qry_read_data(qry)
+  df_existing, error_msg= db.qry_read_data(qry)
+  if df_existing is None:
+    res = dict()
+    res['is_error'] = True
+    res['error_msg'] = error_msg
+    return res
+
   next_ver: int = int(df_existing['version'].values[0]) + 1
   created_user: str = df_existing['created_by'].values[0]
   created_date: str = df_existing['created_date'].values[0]
@@ -97,9 +114,17 @@ def update_nn_instance():
     where `Name` = '{inst_name}' and `Version` = '{next_ver}'
     LIMIT 1
   """
-  df_existing= db.qry_read_data(qry)
-  create_date: str = df_existing['CreateDate'].values[0]
-  update_date: str = df_existing['UpdateDate'].values[0]
+  create_date: str = ""
+  update_date: str = ""
+  df_existing, error_msg = db.qry_read_data(qry)
+  if df_existing is None:
+    res = dict()
+    res['is_error'] = True
+    res['error_msg'] = error_msg
+    return res  
+  else: 
+    create_date = df_existing['CreateDate'].values[0]
+    update_date = df_existing['UpdateDate'].values[0]
 
   res = dict()
   res['is_error'] = is_error

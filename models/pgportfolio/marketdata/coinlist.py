@@ -40,19 +40,27 @@ class CoinList(object):
             if k.startswith("BTC_") or k.endswith("_BTC"):
                 pairs.append(k)
                 logging.info(f'Getting volumn/price data for: {k}')
+                last_price:float = 0
+                volume: int = 0
                 for c, val in v.items():
                     if c != 'BTC':
                         if k.endswith('_BTC'):
                             coins.append('reversed_' + c)
-                            prices.append(1.0 / float(ticker[k]['last']))
+                            last_price = 1.0 / float(ticker[k]['last'])
+                            prices.append(last_price)
                         else:
                             coins.append(c)
-                            prices.append(float(ticker[k]['last']))
+                            last_price = float(ticker[k]['last'])
+                            prices.append(last_price)
                     else:
-                        volumes.append(self.__get_total_volume(pair=k, global_end=end,
+                        volume:int = self.__get_total_volume(pair=k, global_end=end,
                                                                days=volume_average_days,
-                                                               forward=volume_forward))
+                                                               forward=volume_forward)
+                        volumes.append(volume)
+                    logging.info(f"    coin: {c}, pair: {k}, vol: {volume}, price: {last_price}")
+
         self._df = pd.DataFrame({'coin': coins, 'pair': pairs, 'volume': volumes, 'price':prices})
+        
         self._df = self._df.set_index('coin')
         logging.info('____________ COINLIST - Result ___________')
         logging.info(self._df.head(10))
@@ -90,8 +98,8 @@ class CoinList(object):
         if minVolume == 0:
             r = self._df.loc[self._df['price'] > 2e-6]
             r = r.sort_values(by='volume', ascending=False)[:n]
-            print('::::::: top N coins are:::::::: ')
-            print(r)
+            logging.info('::::::: top N coins are:::::::: ')
+            logging.info(r)
             if order:
                 return r
             else:

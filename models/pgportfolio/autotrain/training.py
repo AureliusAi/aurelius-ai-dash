@@ -42,7 +42,7 @@ def train_all(config:dict, processes:int=1, device:str="cpu"):
     Train all the agents in the train_package folders
  
     Args:
-        config (dict): object containing the config of the current run loaded from file and overwritten with user supplied params such as start/end date and number of coins
+        config (dict): object containing the training input parameters for the training session
         processes (int, optional): The number of the processes. If equal to 1, the logging level is debug
                       at file and info at console. If greater than 1, the logging level is
                       info at file and warning at console.

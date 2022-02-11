@@ -42,10 +42,6 @@ export default function TrainOneShot() {
   const [trainingError, setTrainingError] = useState<string | null>(null);
   const [trainingStatus, setTrainingStatus] = useState<string | null>(null);
 
-  const [isDataDownloadRunning, setDataDownloadRunning] = useState<boolean>(false);
-  const [dataDownloadingError, setDataDownloadingError] = useState<string | null>(null);
-  const [dataDownloadStatus, setDataDownloadStatus] = useState<string | null>(null);
-
   // Training Input variables
   const [startTrainDate, setStartTrainDate] = useState<Date | null>(new Date());
   const [endTrainDate, setEndTrainDate] = useState<Date | null>(new Date());
@@ -58,11 +54,12 @@ export default function TrainOneShot() {
   const [volumeAverageDays, setVolumeAverageDays] = useState<number>(30);
   const [testPortion, setTestPortion] = useState<number>(8);
   const [numberOfFeatures, setNumberOfFeatures] = useState<number>(3);
-  const [dataProvider, setDataProvider] = useState<string>("POLONEX");
+  const [dataProvider, setDataProvider] = useState<string>("POLONIEX");
   const [availNNs, setAvailNNs] = useState<string[] | null>(null);
   const [retrieveNNError, setRetrieveNNError] = useState<string | null>(null);
   const [retrievingNNsRunning, setRetrievingNNsRunning] = useState<boolean>(false);
   const [nnToGet, setNNToGet] = useState<string>("");
+  const [trainingStatusMsg, setTrainingStatusMsg] = useState<string | null>(null);
 
   const [deleteExistingRuns, setDeleteExistingRuns] = React.useState(true);
 
@@ -165,84 +162,6 @@ export default function TrainOneShot() {
     return month_difference;
   }
 
-  function onDownloadData(event: React.MouseEvent) {
-    let startdtstr = get_training_start_date();
-    let enddtstr = get_training_end_date();
-
-    let num_days_diff = checkNumDaysBetweenYYYYMMDD(enddtstr, startdtstr);
-    if (num_days_diff <= 0) {
-      setDateRangeError("Must be at least 1 month between Start and End Training dates");
-      return;
-    }
-
-    const dataDownloadOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        coinnum: coinNumber,
-        starttrainingdate: startdtstr,
-        endtrainingdate: enddtstr,
-      }),
-    };
-
-    setDataDownloadingError(null);
-    setDataDownloadStatus(null);
-    setDataDownloadRunning(true);
-    fetch(`${API_TRAINING_ENDPOINT}/get-historical-data`, dataDownloadOptions)
-      .then((res) => res.json())
-      .then(
-        (result) => {
-          console.log(result);
-          setDataDownloadStatus(result.status_msg);
-        },
-        // Note: it's important to handle errors here
-        // instead of a catch() block so that we don't swallow
-        // exceptions from actual bugs in components.
-        (error) => {
-          setDataDownloadingError(error);
-        }
-      )
-      .finally(() => {
-        setDataDownloadRunning(false);
-      });
-  }
-
-  const check_and_get_historic_data = (startdtstr: string, enddtstr: string) => {
-    const options = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        coinnum: coinNumber,
-        starttrainingdate: startdtstr,
-        endtrainingdate: enddtstr,
-        globalperiod: globalPeriod,
-        windowsize: windowSize,
-        volumeaveragedays: volumeAverageDays,
-        numberfeatures: numberOfFeatures,
-        dataprovider: dataProvider,
-        testportion: testPortion,
-      }),
-    };
-    setTrainingError(null);
-    setTrainingRunning(true);
-    fetch(`${API_TRAINING_ENDPOINT}/check-and-retrieve-hist-data`, options)
-      .then((res) => res.json())
-      .then(
-        (result) => {
-          console.log(result);
-        },
-        // Note: it's important to handle errors here
-        // instead of a catch() block so that we don't swallow
-        // exceptions from actual bugs in components.
-        (error) => {
-          setTrainingError(error);
-        }
-      )
-      .finally(() => {
-        setTrainingRunning(false);
-      });
-  };
-
   const kick_off_training = (startdtstr: string, enddtstr: string) => {
     const trainOptions = {
       method: "POST",
@@ -281,10 +200,13 @@ export default function TrainOneShot() {
       )
       .finally(() => {
         setTrainingRunning(false);
+        setTrainingStatusMsg(null);
       });
   };
 
   function onRunOneShotTraining(event: React.MouseEvent) {
+    setTrainingStatusMsg(null);
+
     // check we have all the input params set
 
     // 1. check the NN is selected
@@ -302,12 +224,7 @@ export default function TrainOneShot() {
       return;
     }
 
-    // 3. check other params (epochs etc. defaults are filled in so can't make a big mistake)
-
-    // 4. After params are confirmed first check the data is available
-    check_and_get_historic_data(startdtstr, enddtstr);
-
-    // 5. Run the actual training
+    setTrainingStatusMsg("Training Kicked off!");
     kick_off_training(startdtstr, enddtstr);
   }
 
@@ -381,7 +298,7 @@ export default function TrainOneShot() {
             />
           </LocalizationProvider>
         </Box>
-        <Box ml={2} mr={3}>
+        <Box ml={2}>
           <TextField
             id="coin-number"
             label="Number of Coins"
@@ -396,38 +313,20 @@ export default function TrainOneShot() {
             }}
           />
         </Box>
-        <Box ml={2}>
-          {dateRangeError ? (
-            <span />
-          ) : (
-            <Box sx={{ alignItems: "center" }}>
-              {isTrainingRunning ? (
-                <span />
-              ) : (
-                <Box display="flex">
-                  <LoadingButton startIcon={<DownloadIcon />} color="secondary" loading={isDataDownloadRunning} onClick={onDownloadData} variant="contained">
-                    Historic Data
-                  </LoadingButton>
-
-                  {dataDownloadingError ? (
-                    <Box sx={{ color: "#FF3333" }} ml={2}>
-                      {dataDownloadingError}
-                    </Box>
-                  ) : (
-                    <span />
-                  )}
-                  {dataDownloadStatus ? (
-                    <Box sx={{ color: "#35a660" }} ml={2}>
-                      {dataDownloadStatus}
-                    </Box>
-                  ) : (
-                    <span />
-                  )}
-                </Box>
-              )}
-            </Box>
-          )}
-        </Box>
+        <FormControl sx={{ minWidth: 110, marginLeft: 2, marginRight: 3 }}>
+          <InputLabel id="data-provider-label">Data Provicer</InputLabel>
+          <Select
+            value={dataProvider}
+            id="data-provider-label"
+            onChange={handleDataProviderChange}
+            displayEmpty
+            autoWidth
+            label="Global Period"
+            inputProps={{ "aria-label": "The data provider to use" }}
+          >
+            <MenuItem value="POLONIEX">POLONIEX</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       <Divider light={true} sx={{ mt: 1.5, mb: 0.5, mx: 0 }} />
@@ -509,30 +408,26 @@ export default function TrainOneShot() {
           {dateRangeError && <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>}
           {dateRangeError == null && nnNotSetError == null && (
             <Box>
-              {isDataDownloadRunning ? (
-                <span />
-              ) : (
-                <Box sx={{ alignItems: "center" }} display="flex">
-                  <LoadingButton loading={isTrainingRunning} onClick={onRunOneShotTraining} variant="contained">
-                    Train One Shot
-                  </LoadingButton>
+              <Box sx={{ alignItems: "center" }} display="flex">
+                <LoadingButton loading={isTrainingRunning} onClick={onRunOneShotTraining} variant="contained">
+                  Train One Shot
+                </LoadingButton>
 
-                  {trainingError ? (
-                    <Box sx={{ color: "#FF3333" }} ml={2}>
-                      {trainingError}
-                    </Box>
-                  ) : (
-                    <span />
-                  )}
-                  {trainingStatus ? (
-                    <Box sx={{ color: "#35a660" }} ml={2}>
-                      {trainingStatus}
-                    </Box>
-                  ) : (
-                    <span />
-                  )}
-                </Box>
-              )}
+                {trainingError ? (
+                  <Box sx={{ color: "#FF3333" }} ml={2}>
+                    {trainingError}
+                  </Box>
+                ) : (
+                  <span />
+                )}
+                {trainingStatus ? (
+                  <Box sx={{ color: "#35a660" }} ml={2}>
+                    {trainingStatus}
+                  </Box>
+                ) : (
+                  <span />
+                )}
+              </Box>
             </Box>
           )}
         </Box>
@@ -648,20 +543,7 @@ export default function TrainOneShot() {
             }}
           />
         </Box>
-        <FormControl sx={{ minWidth: 110, marginLeft: 2 }}>
-          <InputLabel id="data-provider-label">Data Provicer</InputLabel>
-          <Select
-            value={dataProvider}
-            id="data-provider-label"
-            onChange={handleDataProviderChange}
-            displayEmpty
-            autoWidth
-            label="Global Period"
-            inputProps={{ "aria-label": "The data provider to use" }}
-          >
-            <MenuItem value="POLONEX">POLONEX</MenuItem>
-          </Select>
-        </FormControl>
+        <Box ml={2}>{trainingStatusMsg ? trainingStatusMsg : <span />}</Box>
       </Box>
       <Box mt={2}>
         <Box>

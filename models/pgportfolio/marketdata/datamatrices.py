@@ -114,10 +114,10 @@ class DataMatrices:
         end = parse_time(input_config["end_date"])
         return DataMatrices(start=start,
                             end=end,
-                            data_provider=input_config["data_provider"],
                             feature_number=input_config["feature_number"],
                             window_size=input_config["window_size"],
                             online=input_config["online"],
+                            data_provider=input_config["data_provider"],
                             period=input_config["global_period"],
                             coin_filter=input_config["coin_number"],
                             is_permed=input_config["is_permed"],

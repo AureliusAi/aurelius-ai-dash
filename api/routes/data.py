@@ -12,10 +12,16 @@ data_pages = Blueprint("data", __name__)
 def get_min_max_data_dates():
 
   db = SqliteDataDB()
-  df = db.qry_read_data("select max(DATETIME(ROUND(date), 'unixepoch')) as maxdate, min(DATETIME(ROUND(date), 'unixepoch')) AS mindate from History")
+  df, err_msg = db.qry_read_data("select max(DATETIME(ROUND(date), 'unixepoch')) as maxdate, min(DATETIME(ROUND(date), 'unixepoch')) AS mindate from History")
   res = dict()
-  res['min_date'] = df['mindate'].values[0]
-  res['max_date'] = df['maxdate'].values[0]
+  if df is not None:
+    res['min_date'] = df['mindate'].values[0]
+    res['max_date'] = df['maxdate'].values[0]
+    res['error_msg'] = err_msg
+  else:
+    res['min_date'] = ""
+    res['max_date'] = ""
+    res['error_msg'] = err_msg
 
   return res
 
@@ -31,16 +37,19 @@ def get_avail_coins():
   enddate:str = request.json['enddate']
 
   coin_list = []
+  error_msg = ""
 
   if isall:
     db = SqliteDataDB()
-    df = db.qry_read_data("select DISTINCT coin from History")
-    coin_list = df['coin'].unique().tolist()
+    df, error_msg = db.qry_read_data("select DISTINCT coin from History")
+    if df is not None:
+      coin_list = df['coin'].unique().tolist()
   else:
     return make_response('failure')
 
   res = dict()
   res['coin_list'] = coin_list
+  res['error_msg'] = error_msg
 
   return res
 
@@ -83,13 +92,17 @@ def get_hist_data():
     WHERE coin != ''
     {where_coin_clause}
     {where_date_clause}
-    limit 1000
+    order by `date` desc
+    limit 10000
   """
   print(f'get_hist_data: {qry}')
-  df = db.qry_read_data(qry)
+  df, error_msg = db.qry_read_data(qry)
   
   res = dict()
-  res['hist_data'] = df.to_json(orient="records")
-
+  if df is not None:
+    res['hist_data'] = df.to_json(orient="records")
+  else:
+    res['hist_data'] = []
+  res['error_msg'] = error_msg
   return res
 

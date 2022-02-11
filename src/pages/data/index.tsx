@@ -56,6 +56,12 @@ export default function Data() {
    */
 
   useEffect(() => {
+    const PAST_DATE = new Date();
+    PAST_DATE.setMonth(PAST_DATE.getMonth() - 1);
+    setStartDate(PAST_DATE);
+  }, []);
+
+  useEffect(() => {
     setMinMaxDatesRetreivedError(null);
     setMinMaxDatesBeingLoaded(true);
     fetch(`${API_DATA_ENDPOINT}/get-min-max-data-dates`)

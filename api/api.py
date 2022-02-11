@@ -69,13 +69,15 @@ def training_log():
         with open(fname, "r+") as f:
             yield f.read()
     while True:
-
-        if os.path.exists(log_path):
-          stamp = os.stat(log_path).st_mtime
-          if stamp != cached_stamp:
-              cached_stamp = stamp
-              emit_data = next(generate())
-              emit('server-msg', {'data':emit_data})
+        try:
+          if os.path.exists(log_path):
+            stamp = os.stat(log_path).st_mtime
+            if stamp != cached_stamp:
+                cached_stamp = stamp
+                emit_data = next(generate())
+                emit('server-msg', {'data':emit_data})
+        except:
+          print("LOG FILE TAMPERED WITH!! ignore....")
 
 
 @socket_.on('echo_event', namespace='/api/ws/echo')
