@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from flask import Blueprint, request, jsonify, make_response,url_for,redirect
 from datetime import date, datetime
 import dateutil.parser
@@ -17,31 +18,6 @@ from models.pgportfolio.tools.configprocess import preprocess_config
 training_pages = Blueprint("training", __name__)
 
 
-def set_up_logging():
-  """
-    
-    Configures logging for training related processes
-
-  """
-  # create the log file
-  tk_now = datetime.now(tz)
-  #log_file_name = f'training_log_{tk_now.strftime("%Y%m%d_%H%M%S")}.log'
-  log_file_name = f'training_log.log'
-  log_path = os.path.join('models','logs',log_file_name)
-  if not os.path.exists(os.path.join('models','logs')):
-    os.makedirs("models/logs")
-  if os.path.exists(log_path):
-    os.remove(log_path)
-
-  # create the Log handlers. 1 for STDOUT and 1 for output to a file
-  file_handler = logging.FileHandler(filename=f'./models/logs/{log_file_name}')
-  stdout_handler = logging.StreamHandler(sys.stdout)
-  handlers = [file_handler, stdout_handler]
-
-  logging.basicConfig(level=logging.INFO, 
-    format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-    handlers=handlers)
-
 @training_pages.post("/api/training/check-and-retrieve-hist-data")
 def check_and_download_historical_data():
   """
@@ -54,8 +30,6 @@ def check_and_download_historical_data():
   """
 
   from models.pgportfolio.marketdata.datamatrices import DataMatrices
-  
-  set_up_logging()
 
   logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logging.info("@training_pages.post(/api/training/check-and-retrieve-hist-data)")
@@ -116,8 +90,6 @@ def download_historical_data():
   """
 
   from models.pgportfolio.marketdata.datamatrices import DataMatrices
-  
-  set_up_logging()
 
   logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logging.info("@training_pages.post(/api/training/get-historical-data)")
@@ -159,7 +131,7 @@ def download_historical_data():
                 end=end,
                 feature_number=config["input"]["feature_number"],
                 window_size=config["input"]["window_size"],
-                online=True,
+                online=False,
                 period=config["input"]["global_period"],
                 volume_average_days=config["input"]["volume_average_days"],
                 coin_filter=coin_num,
@@ -181,8 +153,6 @@ def train_one_shot():
 
   import models.pgportfolio.autotrain.training
   import models.pgportfolio.autotrain.generate as generate
-
-  set_up_logging()
 
   logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logging.info("@training_pages.post(/api/training/train-one-shot)")
@@ -258,14 +228,23 @@ def train_one_shot():
   if df is None:
     return { "status_msg": error_msg, "status_code": -1}
 
-  config['layers'] = df['Definition'].values[0]
-  
+  layers_s = df['Definition'].values[0]
+
+  regex = r"\\(\")|\\n"
+  subst = "\\g<1>"
+
+  result = re.sub(regex, subst, layers_s, 0, re.MULTILINE)
+  if result.startswith('"') and result.endswith('"'):
+      result = result[1:-1]
+  if result:
+      object_result = json.loads(result)
+      config['layers'] = object_result
+
   logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logging.info("Training input Parameters")
   logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logging.info(json.dumps(config, indent=4, sort_keys=True))
   logging.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-
 
   # first delete existing training folders (if deleteExistingRuns=True), generate and then run training
   repeat_option = 1 # TODO: move to UI/config. figure out what to do with it

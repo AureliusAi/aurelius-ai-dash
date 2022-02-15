@@ -1,19 +1,31 @@
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import Plot from "react-plotly.js";
-import { useLayoutEffect, useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useEffect, useRef, useState, useMemo, useCallback } from "react";
 import PageHeader from "../../page-components/PageHeader";
 import Plotly, { PlotType } from "plotly.js";
 import { initiateEchoSocket, disconnectEchoSocket, subscribeToEchoedMessage, sendEchoMessage } from "../../page-components/echo_websocket";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
 var revno: number = 0;
 
+const binance_socketUrl = "wss://stream.binance.com:9443/ws";
+
 export default function Dashboard() {
-  const [graphRevision, setGraphRevision] = useState(0);
-  const [echoText, setEchoText] = useState("");
-  const [echoedBackText, setEchoedBackText] = useState("");
+  const [graphRevision, setGraphRevision] = useState<number>(0);
+  const [echoText, setEchoText] = useState<string>("");
+  const [echoedBackText, setEchoedBackText] = useState<string>("");
   const [btcTickerData, setBtcTickerData] = useState(null);
-  const [randomWalkVal, setRandomWalkVal] = useState(0);
+
+  const [tickerToStreamFromBinance1, setTickerToStreamFromBinance1] = useState<string | null>("btcusdt");
+  const [dataTypeToStreamFromBinance1, setDataTypeToStreamFromBinance1] = useState<string | null>("trade");
+  const [dataFromDT1, setDataFromDT1] = useState<string | null>("");
+
+  const [tickerToStreamFromBinance2, setTickerToStreamFromBinance2] = useState<string | null>("btcusdt");
+  const [dataTypeToStreamFromBinance2, setDataTypeToStreamFromBinance2] = useState<string | null>("kline_1m");
+  const [dataFromDT2, setDataFromDT2] = useState<string | null>("");
+
+  const [numbTotalSubscriptions, setNumbTotalSubscriptions] = useState<number | null>(null);
   const [bids, setBids] = useState([0]);
   const [rwData, setRWData] = useState({
     x: [] as Date[],
@@ -22,9 +34,92 @@ export default function Dashboard() {
     marker: { color: "red" },
   });
 
-  const [plotlyData, setPlotlyData] = useState([rwData]);
+  const messageHistory = useRef<MessageEvent[]>([]);
 
-  const echo_ws = useRef<WebSocket | null>(null);
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(binance_socketUrl);
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Binance Websocket service
+  /////////////////////////////////////////////////////////////////////////////
+
+  useEffect(() => {
+    console.log(lastJsonMessage);
+    if (lastJsonMessage) {
+      if ("e" in lastJsonMessage) {
+        const updateType: string = lastJsonMessage["e"];
+        if (updateType === "trade") {
+          setDataFromDT1(JSON.stringify(lastJsonMessage));
+        } else if (updateType == "kline") {
+          setDataFromDT2(JSON.stringify(lastJsonMessage));
+        }
+      }
+    }
+  }, [lastJsonMessage]);
+
+  messageHistory.current = useMemo(() => messageHistory.current.concat(lastJsonMessage ?? []), [lastJsonMessage]);
+
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated",
+  }[readyState];
+
+  // this is how you start and stop feeds from binance API
+  const handleSubscribeDataType1 = useCallback(
+    () =>
+      sendJsonMessage({
+        method: "SUBSCRIBE",
+        params: [`${tickerToStreamFromBinance1}@${dataTypeToStreamFromBinance1}`],
+        id: 1,
+      }),
+    [sendJsonMessage]
+  );
+
+  const handleUnSubscribeDataType1 = useCallback(
+    () =>
+      sendJsonMessage({
+        method: "UNSUBSCRIBE",
+        params: [`${tickerToStreamFromBinance1}@${dataTypeToStreamFromBinance1}`],
+        id: 1,
+      }),
+    [sendJsonMessage]
+  );
+
+  //---------------------------------------------------------------------------
+
+  // this is how you start and stop feeds from binance API
+  const handleSubscribeDataType2 = useCallback(
+    () =>
+      sendJsonMessage({
+        method: "SUBSCRIBE",
+        params: [`${tickerToStreamFromBinance2}@${dataTypeToStreamFromBinance2}`],
+        id: 2,
+      }),
+    [sendJsonMessage]
+  );
+
+  const handleUnSubscribeDataType2 = useCallback(
+    () =>
+      sendJsonMessage({
+        method: "UNSUBSCRIBE",
+        params: [`${tickerToStreamFromBinance2}@${dataTypeToStreamFromBinance2}`],
+        id: 2,
+      }),
+    [sendJsonMessage]
+  );
+
+  const handleClickGetSubscriptions = useCallback(
+    () =>
+      sendJsonMessage({
+        method: "LIST_SUBSCRIPTIONS",
+        id: 1,
+      }),
+    [sendJsonMessage]
+  );
+
+  /////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////////////////////
   // Echo Webservice set up
@@ -48,147 +143,58 @@ export default function Dashboard() {
     };
   }, []);
 
-  // useEffect(() => {
-
-  //   const btc_px_action_ws = new WebSocket("ws://localhost:5000/api/ws/btc-ticker-feed");
-
-  //   const apiCall = {
-  //     command: "subscribe",
-  //     channel: "ticker",
-  //     symbol: "BTC",
-  //   };
-
-  //   btc_px_action_ws.onopen = (event) => {
-  //     btc_px_action_ws.send(JSON.stringify(apiCall));
-  //   };
-
-  //   btc_px_action_ws.onmessage = function (event) {
-  //     setBtcTickerData(event.data);
-  //     //   const json = JSON.parse(event.data);
-  //     //   try {
-  //     //     if (json.event == "data") {
-  //     //       setBids(json.data.bids.slice(0, 5));
-  //     //     }
-  //     //   } catch (err) {
-  //     //     console.log(err);
-  //     //   }
-  //   };
-  //   return () => {
-  //     btc_px_action_ws.close();
-  //   };
-  // }, []);
-
-  //////////////////////////////////////////////////////////////////
-  //
-  //     Very nice example of how to use websockets
-  //
-  //////////////////////////////////////////////////////////////////
-  //
-  // const apiCall = {
-  //   event: "bts:subscribe",
-  //   data: { channel: "order_book_btcusd" },
-  // };
-  // useEffect(() => {
-  //   const ws = new WebSocket("wss://ws.bitstamp.net");
-  //   ws.onopen = (event) => {
-  //     ws.send(JSON.stringify(apiCall));
-  //   };
-  //   ws.onmessage = function (event) {
-  //     const json = JSON.parse(event.data);
-  //     try {
-  //       if (json.event == "data") {
-  //         setBids(json.data.bids.slice(0, 5));
-  //       }
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
-  //   //clean up function
-  //   return () => ws.close();
-  // }, []);
-  // const firstBids = bids.map((item, index) => (
-  //   <div key={index}>
-  //     <p> {item}</p>
-  //   </div>
-  // ));
-
-  // useLayoutEffect(() => {
-  //   const ws = new WebSocket("wss://api.coin.z.com/ws/public/v1");
-
-  //   ws.on("open", () => {
-  //     const message = JSON.stringify({
-  //       command: "subscribe",
-  //       channel: "ticker",
-  //       symbol: "BTC",
-  //     });
-  //     ws.send(message);
-  //   });
-
-  //   ws.on("message", (data: any) => {
-  //     console.log("WebSocket message: ", data);
-  //   });
-  // }, []);
-
-  var rw_trace_layout = {
-    xaxis: {
-      // type: "date",
-      showticklabels: true,
-      title: "Time",
-    },
-    yaxis: { title: "Value" },
-    title: "Server Generated Random Walk",
-    width: 1000,
-    height: 500,
-    datarevision: 0,
-  };
-
-  // useLayoutEffect(() => {
-  //   random_walk_ws.current = new WebSocket("ws://localhost:5000/api/ws/random-walk");
-  //   random_walk_ws.current.onmessage = (evt) => {
-  //     setRandomWalkVal(evt.data);
-
-  //     revno = revno + 1;
-
-  //     const newData = { ...rwData };
-
-  //     var x_data: Date[] = rwData["x"];
-  //     x_data.push(new Date());
-  //     // console.log(x_data);
-  //     if (x_data.length > 30) {
-  //       x_data.splice(0, 1);
-  //     }
-
-  //     var y_data: number[] = rwData["y"];
-  //     y_data.push(evt.data);
-  //     // console.log(y_data);
-  //     if (y_data.length > 30) {
-  //       y_data.splice(0, 1);
-  //     }
-
-  //     newData["x"] = x_data;
-  //     newData["y"] = y_data;
-
-  //     setRWData(newData);
-
-  //     setPlotlyData([rwData]);
-  //     // console.log(plotlyData);
-
-  //     rw_trace_layout.datarevision = rw_trace_layout.datarevision + 1;
-  //     setGraphRevision(rw_trace_layout.datarevision);
-  //     // console.log(graphRevision);
-  //     // console.log(rw_trace_layout.datarevision);
-  //     // console.log(revno);
-
-  //     Plotly.relayout("plty", rw_trace_layout);
-  //   };
-  //   return () => {
-  //     random_walk_ws.current?.close();
-  //   };
-  // }, [random_walk_ws]);
-
   return (
     <Box>
       <PageHeader>Dashboard</PageHeader>
+      <Box sx={{ my: 3, pb: 3, borderTop: "1px solid #CCCCCC", borderBottom: "1px solid #CCCCCC" }}>
+        <Box mt={2}>
+          <Box display="flex" sx={{ mb: 1, justifyContent: "space-between", alignItems: "center" }}>
+            <Box display="flex">
+              <Box>The WebSocket is currently</Box>
+              <Box mx={1}> | </Box>
+              <Box style={{ fontWeight: "bold", color: "#35a660" }}>{connectionStatus}</Box>
+            </Box>
+            <Box display="flex">
+              <Box>{numbTotalSubscriptions && numbTotalSubscriptions}</Box>
+              <Button variant="outlined" sx={{ ml: 1 }} onClick={handleClickGetSubscriptions}>
+                Check Subscriptions
+              </Button>
+            </Box>
+          </Box>
+          <Box display="flex" sx={{ mb: 1, alignItems: "center" }}>
+            <Box sx={{ mr: 2, color: "#999999" }}>1. </Box>
+            <Button variant="outlined" sx={{ marginRight: 1 }} onClick={handleSubscribeDataType1} disabled={readyState !== ReadyState.OPEN}>
+              Subscribe
+            </Button>
+            <Button variant="outlined" sx={{ marginRight: 2 }} onClick={handleUnSubscribeDataType1} disabled={readyState !== ReadyState.OPEN}>
+              Unsubscribe
+            </Button>
+            <Box>data type </Box>
+            <Box mx={1}> | </Box>
+            <Box sx={{ color: "#35a660" }}>
+              {tickerToStreamFromBinance1}@{dataTypeToStreamFromBinance1}
+            </Box>
+            <Box mx={1}> | </Box>
+            <Box>{dataFromDT1}</Box>
+          </Box>
+          <Box display="flex" sx={{ alignItems: "center" }}>
+            <Box sx={{ mr: 2, color: "#999999" }}>2. </Box>
+            <Button variant="outlined" sx={{ marginRight: 1 }} onClick={handleSubscribeDataType2} disabled={readyState !== ReadyState.OPEN}>
+              Subscribe
+            </Button>
+            <Button variant="outlined" sx={{ marginRight: 2 }} onClick={handleUnSubscribeDataType2} disabled={readyState !== ReadyState.OPEN}>
+              Unsubscribe
+            </Button>
+            <Box>data type </Box>
+            <Box mx={1}> | </Box>
+            <Box sx={{ color: "#35a660" }}>
+              {tickerToStreamFromBinance2}@{dataTypeToStreamFromBinance2}
+            </Box>
+            <Box mx={1}> | </Box>
+            <Box>{dataFromDT2}</Box>
+          </Box>
+        </Box>
+      </Box>
       <Box>
         <TextField
           id="standard-basic"

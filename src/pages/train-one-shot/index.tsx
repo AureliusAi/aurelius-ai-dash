@@ -91,8 +91,7 @@ export default function TrainOneShot() {
     subscribeToLog((err: string, data: string) => {
       if (err) return;
       console.log(data);
-      setLogData((oldLogs: Array<string>) => [data, ...oldLogs]);
-      console.log(logData);
+      setLogData((oldLogs: Array<string>) => [...oldLogs, data + "\n"]);
     });
     return () => {
       disconnectLogSocket();
@@ -206,6 +205,7 @@ export default function TrainOneShot() {
 
   function onRunOneShotTraining(event: React.MouseEvent) {
     setTrainingStatusMsg(null);
+    setLogData([]);
 
     // check we have all the input params set
 
@@ -551,7 +551,7 @@ export default function TrainOneShot() {
         </Box>
         <TextareaAutosize
           value={logData}
-          maxLength={1000}
+          maxRows={10000}
           aria-label="minimum height"
           minRows={20}
           placeholder="Training Logs"

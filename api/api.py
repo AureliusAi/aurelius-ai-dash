@@ -1,27 +1,56 @@
 import os
-import time
+import sys
 from datetime import datetime
+import queue
+import threading
 
 import pytz
 from flask import Flask, session
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit, disconnect
-from threading import Lock
-
-import json
-import websocket
-
-
+from flask_socketio import SocketIO, disconnect, emit
 from scipy.stats import norm
-from common.classes import BtcTickerObserver
-import common.providers as provider
 
+import common.providers as provider
+from common.classes import BtcTickerObserver
+from routes.config import config_pages
 # import all the pages
 from routes.data import data_pages
 from routes.training import training_pages
-from routes.config import config_pages
 
 tz = pytz.timezone('Asia/Tokyo')
+
+########################################################################################
+# Set up Logging - this shoudl be the only place the logging config is being set up
+########################################################################################
+import logging
+from logging.handlers import QueueHandler
+logging_q = queue.Queue()
+
+# create the log file
+log_file_name:str = f'syslog_{datetime.now(tz).strftime("%Y%m%d_%H%M%S")}.log'
+full_log_path:str = os.path.join('models','logs',log_file_name)
+
+error_log_file_name:str = f'ERROR_LOG_{datetime.now(tz).strftime("%Y%m%d_%H%M%S")}.log'
+full_error_log_path:str = os.path.join('models','logs',error_log_file_name)
+if not os.path.exists(os.path.join('models','logs')):
+  os.makedirs("models/logs")
+
+# create the Log handlers. 1 for STDOUT and 1 for output to a file
+file_handler = logging.FileHandler(filename=full_log_path)
+error_file_handler = logging.FileHandler(filename=full_error_log_path)
+error_file_handler.setLevel(logging.ERROR)
+stdout_handler = logging.StreamHandler(sys.stdout)
+queue_logging_handler = QueueHandler(logging_q)
+handlers = [file_handler, stdout_handler, error_file_handler, queue_logging_handler]
+
+logging.basicConfig(
+  level=logging.INFO, 
+  format='[%(asctime)s]%(filename)s:%(lineno)d[%(levelname)s]%(message)s',
+  handlers=handlers
+)
+
+########################################################################################
+
 
 app = Flask(__name__, static_folder="../build", static_url_path='/')
 app.config['SECRET_KEY'] = 'shhhhhhh!'
@@ -35,6 +64,8 @@ app.register_blueprint(config_pages)
 #socket_ = SocketIO(app, async_mode=None)
 # |cors_allowed_origins| is required for localhost testing.
 socket_ = SocketIO(app, cors_allowed_origins="*")
+
+
 
 ###############################################################################
 # HTTP 
@@ -59,25 +90,14 @@ def get_current_time():
 
 @socket_.on('event_stream', namespace='/api/ws/log/training')
 def training_log():
-    cached_stamp = 0
 
-    log_file_name = 'training_log.log'
-    log_path = './models/logs/training_log.log'
-
-    def generate():
-        fname = "./models/logs/training_log.log"
-        with open(fname, "r+") as f:
-            yield f.read()
     while True:
         try:
-          if os.path.exists(log_path):
-            stamp = os.stat(log_path).st_mtime
-            if stamp != cached_stamp:
-                cached_stamp = stamp
-                emit_data = next(generate())
-                emit('server-msg', {'data':emit_data})
-        except:
-          print("LOG FILE TAMPERED WITH!! ignore....")
+          log:logging.LogRecord = logging_q.get()
+          emit('server-msg', {'data':log.msg})
+        except Exception as e:
+          print(str(e))
+          logging.warning("LOG FILE TAMPERED WITH!! ignore....")
 
 
 @socket_.on('echo_event', namespace='/api/ws/echo')
@@ -85,7 +105,7 @@ def echo(msg):
   
   dt_stamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
   reply_msg:str = f'{msg["message"]}'
-  print('\tsend back msg: {reply_msg}')
+  logging.info('\tsend back msg: {reply_msg}')
   emit('echoed-msg', {'data':reply_msg})
 
 

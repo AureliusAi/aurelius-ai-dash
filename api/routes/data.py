@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, make_response,url_for,redirect
 from datetime import datetime
 import dateutil.parser
 import time
+import logging
 
 from common.db import SqliteDataDB
 
@@ -79,7 +80,7 @@ def get_hist_data():
   if enddate != '':
     enddate_dt = dateutil.parser.isoparse(enddate)
     enddate_unix = int(time.mktime(enddate_dt.timetuple()))
-    print(enddate_unix)
+    logging.info(f'enddate_unix: {enddate_unix}')
     where_date_clause += f' and `date` <= {enddate_unix}'
 
   where_coin_clause = ''
@@ -95,7 +96,7 @@ def get_hist_data():
     order by `date` desc
     limit 10000
   """
-  print(f'get_hist_data: {qry}')
+  logging.info(f'get_hist_data: {qry}')
   df, error_msg = db.qry_read_data(qry)
   
   res = dict()

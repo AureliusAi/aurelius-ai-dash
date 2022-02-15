@@ -4,6 +4,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import logging
+
 import tensorflow.compat.v1 as tf
 
 tf.disable_v2_behavior()
@@ -112,14 +114,18 @@ class CNN(NeuralNetWork):
         network = network / network[:, :, -1, 0, None, None]
         for layer_number, layer in enumerate(layers):
 
-            reg_type = layer["regularizer"]
+            logging.info(layer)
+            
             regularizer = None
-            if reg_type == 'L2':
-                regularizer = tf.keras.regularizers.l2
-            elif reg_type == 'L1':
-                regularizer = tf.keras.regularizers.l1
-            elif reg_type == 'L1L2':
-                regularizer = tf.keras.regularizers.l1_l2
+            if 'regularizer' in layer:
+                reg_type = layer["regularizer"]
+            
+                if reg_type == 'L2':
+                    regularizer = tf.keras.regularizers.l2
+                elif reg_type == 'L1':
+                    regularizer = tf.keras.regularizers.l1
+                elif reg_type == 'L1L2':
+                    regularizer = tf.keras.regularizers.l1_l2
 
             if layer["type"] == "DenseLayer":
                 network = tf.keras.layers.Dense(
