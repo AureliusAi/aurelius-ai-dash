@@ -62,9 +62,9 @@ export default function Dashboard() {
           //   "m": true,        // Is the buyer the market maker?
           //   "M": true         // Ignore
           // }
-          const print_msg = `[${unix_to_datetime(lastJsonMessage["T"])}] Ticker: ${lastJsonMessage["s"]} @ ${lastJsonMessage["p"]}, Qty: ${
-            lastJsonMessage["q"]
-          } (is Buyer MM? ${lastJsonMessage["m"]})`;
+          const print_msg = `[${unix_to_datetime(lastJsonMessage["T"])}] Ticker: ${lastJsonMessage["s"]} @ ${parseFloat(lastJsonMessage["p"]).toFixed(
+            3
+          )}, Qty: ${lastJsonMessage["q"]} (is Buyer MM? ${lastJsonMessage["m"]})`;
 
           setDataFromDT1(print_msg);
         } else if (updateType == "kline") {
@@ -93,9 +93,11 @@ export default function Dashboard() {
           //   }
           // }
           const kObj = lastJsonMessage["k"];
-          const print_msg = `[${unix_to_datetime(kObj["T"])}] Ticker: ${kObj["s"]} @ ${kObj["i"]}, O: ${kObj["o"]}, H: ${kObj["h"]}, L: ${kObj["l"]}, C: ${
-            kObj["c"]
-          }. num trades: ${kObj["n"]}, base asset vol: ${kObj["v"]}`;
+          const print_msg = `[${unix_to_datetime(kObj["T"])}] Ticker: ${kObj["s"]} @ ${kObj["i"]}, O: ${parseFloat(kObj["o"]).toFixed(3)}, H: ${parseFloat(
+            kObj["h"]
+          ).toFixed(3)}, L: ${parseFloat(kObj["l"]).toFixed(3)}, C: ${parseFloat(kObj["c"]).toFixed(3)}. num trades: ${kObj["n"]}, base asset vol: ${
+            kObj["v"]
+          }`;
 
           setDataFromDT2(print_msg);
         }
