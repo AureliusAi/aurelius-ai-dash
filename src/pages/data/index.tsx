@@ -57,7 +57,7 @@ export default function Data() {
 
   useEffect(() => {
     const PAST_DATE = new Date();
-    PAST_DATE.setMonth(PAST_DATE.getMonth() - 1);
+    PAST_DATE.setMonth(PAST_DATE.getMonth() - 6);
     setStartDate(PAST_DATE);
   }, []);
 

@@ -3,7 +3,7 @@ import DateAdapter from "@mui/lab/AdapterDateFns";
 import DatePicker from "@mui/lab/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
-import { Divider, InputLabel } from "@mui/material";
+import { Button, Divider, InputLabel } from "@mui/material";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
@@ -15,6 +15,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import TextField from "@mui/material/TextField";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import React, { ChangeEvent, useEffect, useLayoutEffect, useState } from "react";
 import { API_CONFIG_ENDPOINT, API_TRAINING_ENDPOINT } from "../../endpoints";
 import { disconnectLogSocket, initiateLogSocket, subscribeToLog } from "../../page-components/log_sockets";
@@ -30,6 +31,8 @@ const MenuProps = {
     },
   },
 };
+
+const fifo:Array<string> = [];
 
 export default function TrainOneShot() {
   const theme = useTheme();
@@ -65,7 +68,10 @@ export default function TrainOneShot() {
 
   // streaming log related
   const [logType, setLogType] = useState<string>("TRAINING");
-  const [logData, setLogData] = useState<Array<string>>([]);
+  const [logData, setLogData] = useState<Array<string>>(fifo);
+  const [logDataStr, setLogDataStr] = useState<string>("");
+
+  const node = document.querySelectorAll('#logterminal')[0];
 
   useLayoutEffect(() => {
     const PAST_DATE = new Date();
@@ -86,17 +92,31 @@ export default function TrainOneShot() {
   // }, [nnNotSetError]);
 
   useEffect(() => {
-    if (logType) initiateLogSocket(logType);
+    console.log('isTrainingRunning:' + isTrainingRunning)
+    if (isTrainingRunning === true) {
+      if (logType) initiateLogSocket(logType);
+      console.log("initing log")
 
-    subscribeToLog((err: string, data: string) => {
-      if (err) return;
-      console.log(data);
-      setLogData((oldLogs: Array<string>) => [...oldLogs, data + "\n"]);
-    });
-    return () => {
-      disconnectLogSocket();
-    };
-  }, [logType]);
+      subscribeToLog((err: string, data: string) => {
+        if (err) return;
+        console.log("LOG STREAM: " + data)
+        // setLogDataStr(logDataStr + "\n" + data);
+        fifo.push(data)
+        //setLogData((oldLogs: Array<string>) => [...oldLogs, data + "\n"]);
+        if(fifo.length > 10000) {
+          const ssss = fifo.shift()
+          console.log('shifting!!!!!')
+          console.log(ssss)
+        }
+        setLogDataStr(fifo.join("<br />"));
+        node.innerHTML = fifo.join("<br />")
+        // setLogData(fifo)
+      });
+      return () => {
+        disconnectLogSocket();
+      };
+    }
+  }, [isTrainingRunning]);
 
   const get_list_of_avail_nns = () => {
     setRetrieveNNError(null);
@@ -205,6 +225,7 @@ export default function TrainOneShot() {
 
   function onRunOneShotTraining(event: React.MouseEvent) {
     setTrainingStatusMsg(null);
+    setLogDataStr("")
     setLogData([]);
 
     // check we have all the input params set
@@ -255,6 +276,11 @@ export default function TrainOneShot() {
     } else {
       setNnNotSetError("Please select a Neural Network to run");
     }
+  };
+
+  const onClearConsole = (event: any) => {
+    setLogData([]);
+    setLogDataStr("");
   };
 
   return (
@@ -546,17 +572,28 @@ export default function TrainOneShot() {
         <Box ml={2}>{trainingStatusMsg ? trainingStatusMsg : <span />}</Box>
       </Box>
       <Box mt={2}>
-        <Box>
-          <H2Title>Training Log Console</H2Title>
+        <Box display="flex" sx={{ justifyContent: "space-between" }}>
+          <Box>
+            <H2Title>Training Log Console</H2Title>
+          </Box>
+          <Box>
+            <Button color="error" onClick={onClearConsole} startIcon={<DeleteForeverIcon />}>
+              Clear Console
+            </Button>
+          </Box>
         </Box>
-        <TextareaAutosize
+        <Box id={'logterminal'} sx={{ border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 480px)", resize: "vertical", overflow: "auto" }}>
+        {logDataStr}
+        </Box>
+
+        {/* <TextareaAutosize
           value={logData}
-          maxRows={10000}
+          maxRows={100000}
           aria-label="minimum height"
           minRows={20}
           placeholder="Training Logs"
           style={{ width: "100%", height: "calc(100vh - 480px)", resize: "vertical", overflow: "auto" }}
-        />
+        /> */}
       </Box>
     </Box>
   );

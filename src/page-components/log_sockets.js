@@ -3,10 +3,10 @@ import io from "socket.io-client";
 let socket;
 
 export const initiateLogSocket = (log_type) => {
-  socket = io("ws://localhost:5000/api/ws/log/training");
+  socket = io("ws://localhost:5000/api/ws/training-log");
   console.log(`Connecting socket...`);
   if (socket) {
-    socket.emit("event_stream", () => {
+    socket.emit("log_event_stream_start", () => {
       console.log("Websocket connected: " + socket.connected);
     });
   }
@@ -15,6 +15,11 @@ export const initiateLogSocket = (log_type) => {
 
 export const disconnectLogSocket = () => {
   console.log("Disconnecting socket...");
+  if (socket) {
+    socket.emit("log_event_stream_stop", () => {
+      console.log("Websocket log service stopped: ");
+    });
+  }
   if (socket) socket.disconnect();
 };
 

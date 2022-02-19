@@ -1,8 +1,12 @@
-from flask import Blueprint, request, jsonify, make_response,url_for,redirect
+from flask import Blueprint, request, jsonify, make_response, url_for, redirect
 from datetime import datetime
 import dateutil.parser
 import time
-import logging
+from common.custom_logger2 import get_custom_logger, get_custom_training_logger
+from common.custom_logger2 import global_training_queue
+
+logger = get_custom_logger(__name__)
+training_logger = get_custom_training_logger(__name__)
 
 from common.db import SqliteDataDB
 
@@ -33,9 +37,9 @@ def get_avail_coins():
   Retrieves a list of coins either between a start and end date or all the coins available in the History DB
   """
 
-  isall:bool = bool(request.json['isall'])
-  startdate:str = request.json['startdate']
-  enddate:str = request.json['enddate']
+  isall: bool = bool(request.json['isall'])
+  startdate: str = request.json['startdate']
+  enddate: str = request.json['enddate']
 
   coin_list = []
   error_msg = ""
@@ -60,9 +64,9 @@ def get_hist_data():
   """
   Retrieves a list of coins either between a start and end date or all the coins available in the History DB
   """
-  startdate:str = request.json['startdate']
-  enddate:str = request.json['enddate']
-  coinliststr:str = request.json['coinlist'].strip()
+  startdate: str = request.json['startdate']
+  enddate: str = request.json['enddate']
+  coinliststr: str = request.json['coinlist'].strip()
 
   if len(coinliststr) > 0:
     coinlist = coinliststr.split(',')
@@ -80,7 +84,7 @@ def get_hist_data():
   if enddate != '':
     enddate_dt = dateutil.parser.isoparse(enddate)
     enddate_unix = int(time.mktime(enddate_dt.timetuple()))
-    logging.info(f'enddate_unix: {enddate_unix}')
+    logger.info(f'enddate_unix: {enddate_unix}')
     where_date_clause += f' and `date` <= {enddate_unix}'
 
   where_coin_clause = ''
@@ -96,9 +100,9 @@ def get_hist_data():
     order by `date` desc
     limit 10000
   """
-  logging.info(f'get_hist_data: {qry}')
+  logger.info(f'get_hist_data: {qry}')
   df, error_msg = db.qry_read_data(qry)
-  
+
   res = dict()
   if df is not None:
     res['hist_data'] = df.to_json(orient="records")
@@ -107,3 +111,9 @@ def get_hist_data():
   res['error_msg'] = error_msg
   return res
 
+
+@data_pages.post("/api/data/download-hist-data")
+def downloadHistoricData():
+  startdate: str = request.json['startdate']
+  enddate: str = request.json['enddate']
+  coinnum: int = request.json['coinnum']
