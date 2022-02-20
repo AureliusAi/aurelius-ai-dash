@@ -286,7 +286,6 @@ export default function TrainOneShot() {
 
   return (
     <Box>
-      <PageHeader>Train One Shot</PageHeader>
       <Box pb={4} sx={{ color: theme.palette.text.secondary }}>
         Train portfolio on historic data given a start date, end date, number of coins and other parameters
       </Box>
@@ -583,7 +582,7 @@ export default function TrainOneShot() {
             </Button>
           </Box>
         </Box>
-        <Box id={'logterminal'} sx={{ fontFamily: 'monospace', border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 480px)", resize: "vertical", overflow: "auto" }}>
+        <Box id={'logterminal'} sx={{ fontFamily: 'monospace', border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 540px)", resize: "vertical", overflow: "auto" }}>
         {logDataStr}
         </Box>
 

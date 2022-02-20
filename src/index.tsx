@@ -4,12 +4,12 @@ import ReactDOM from "react-dom";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DashboardWrapper from "./dashboard/DashboardWrapper";
 import "./index.css";
-import Backtest from "./pages/backtest";
-import Models from "./pages/models";
-import Dashboard from "./pages/dashboard";
-import Data from "./pages/data";
+import Backtest from "./pages/backtest/BacktestIndex";
+import Models from "./pages/models/ModlesIndex";
+import Dashboard from "./pages/dashboard/DashboardIndex";
+import Data from "./pages/data/DataIndex";
 import OnlineMode from "./pages/online-mode";
-import TrainOneShot from "./pages/train-one-shot";
+import TrainOneShot from "./pages/training/TrainingIndex";
 import reportWebVitals from "./reportWebVitals";
 import Networks from "./pages/models/networks";
 

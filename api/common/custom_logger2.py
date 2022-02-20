@@ -76,7 +76,7 @@ def get_custom_logger(logger_name, add_console_logger: bool = True):
 def get_custom_training_logger(logger_name):
   global SendToSocketTrainingLogHandler_Instance
   logger = logging.getLogger(logger_name)
-  logger.setLevel(logging.DEBUG)  # better to have too much log than not enough
+  logger.setLevel(logging.INFO)  # better to have too much log than not enough
   training_queue_handler = SendToSocketTrainingLogHandler_Instance
   logger.addHandler(training_queue_handler)
 

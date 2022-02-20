@@ -14,6 +14,7 @@ from multiprocessing import Queue
 # import tflearn
 import numpy as np
 import pandas as pd
+from common.db import SqliteDataDB
 import tensorflow.compat.v1 as tf
 from models.pgportfolio.learn.nnagent import NNAgent
 from models.pgportfolio.marketdata.datamatrices import DataMatrices
@@ -123,7 +124,7 @@ class TraderTrainer:
 
     # print 'ouput is %s' % out
     logger.info("=" * 50)
-    logger.info("step: %d" % step)
+    logger.info(f"Step: {step} / {self.train_config['steps']}")
     logger.info("=" * 50)
     if not fast_train:
       logger.info("training loss is %s\n" % loss_value)
@@ -222,7 +223,9 @@ class TraderTrainer:
     logger.warning("the portfolio value train No.%s is %s log_mean is %s,"
                    " the training time is %d seconds" % (index, pv, log_mean, time.time() - starttime))
 
-    return self.__log_result_csv(index, time.time() - starttime)
+    training_result: collections.namedtuple = self.__log_result_csv(index, time.time() - starttime)
+
+    return training_result
 
   def __log_result_csv(self, index, time):
     from models.pgportfolio.trade import backtest
@@ -251,6 +254,9 @@ class TraderTrainer:
         training_time=int(time),
     )
     new_data_frame = pd.DataFrame(result._asdict()).set_index("net_dir")
+
+    self._save_results_to_db(new_data_frame)
+
     if os.path.isfile(csv_dir):
       dataframe = pd.read_csv(csv_dir).set_index("net_dir")
       dataframe = dataframe.append(new_data_frame)
@@ -259,3 +265,25 @@ class TraderTrainer:
     if int(index) > 0:
       dataframe.to_csv(csv_dir)
     return result
+
+  def _save_results_to_db(self, results_df: pd.DataFrame) -> None:
+    """save the results of this training session
+
+    The input results named tuple contains the PV/mean return and historical returns for test/backtest for training period
+
+    Information from the config including the start/end window/coin info etc will be stored along with the results
+
+    Args:
+        collections (_type_): the main results from training
+    """
+
+    # enrich the results_df with config info
+    self.config
+    self.train_config
+    self.input_config
+    self.save_path
+    self.best_metric
+    results_df
+
+    db = SqliteDataDB()
+    db.insert_data_frame(results_df, 'Training_Results', if_exists='replace')

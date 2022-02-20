@@ -101,7 +101,7 @@ class Trader:
     if not self.__class__.__name__ == "BackTest":
       self._last_omega = omega.copy()
     logger.info('total assets are %3f BTC' % self._total_capital)
-    logger.debug("=" * 30)
+    #logger.debug("=" * 30)
     trading_time = time.time() - starttime
     if trading_time < self._period:
       logger.info("sleep for %s seconds" % (self._period - trading_time))

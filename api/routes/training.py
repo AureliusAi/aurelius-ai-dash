@@ -262,6 +262,9 @@ def train_one_shot():
   if dataprovider != "":
     config["input"]["data_provider"] = dataprovider
 
+  if nn != "":
+    config["training"]["nn_agent_name"] = nn
+
   #training_logger.info("1. (training) Constructing Training Input Params")
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logger.info("1. Training input Parameters")

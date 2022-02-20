@@ -2,3 +2,5 @@ pytz
 flask
 python-dotenv
 flask-sock
+sqlalchemy
+tensorflow

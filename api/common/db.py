@@ -1,13 +1,19 @@
 import sqlite3
+import sqlalchemy
+import pandas as pd
 from typing import Tuple
 import pandas as pd
+import os
+
 
 class SqliteDataDB:
 
   def __init__(self):
     self.DATABASE_DIR = 'models/database/Data.db'
+    print(os.getcwd())
+    self.SQLALCHEMY_PATH = 'sqlite:///models/database/Data.db'
 
-  def qry_read_data(self, sql:str, parse_dates_cols:list=None, index_col:str=None):
+  def qry_read_data(self, sql: str, parse_dates_cols: list = None, index_col: str = None):
     with sqlite3.connect(self.DATABASE_DIR) as connection:
       error_msg: str = ""
       try:
@@ -15,10 +21,20 @@ class SqliteDataDB:
       except sqlite3.Error as err:
         error_msg = err.message
         return None, error_msg
-      
+
       return df, error_msg
 
-  def insert_bulk_data(self, sql:str, input_list:list):
+  def insert_data_frame(self, df: pd.DataFrame, table_name: str, if_exists='append'):
+    """bulk insert a Pandas Dataframe into the Sqlite DB
+
+    Args:
+        df (pd.DataFrame): _description_
+        if_exists (str, optional): _description_. Defaults to 'append'.
+    """
+    engine = sqlalchemy.create_engine(self.SQLALCHEMY_PATH, echo=False)
+    df.to_sql(table_name, con=engine, if_exists=if_exists)
+
+  def insert_bulk_data(self, sql: str, input_list: list):
     """Insert data into the SQL DB
 
     Args:
@@ -52,8 +68,7 @@ class SqliteDataDB:
 
       return isError, errorTxt
 
-
-  def update_or_delete_data(self, sql:str):
+  def update_or_delete_data(self, sql: str):
     """delete/update data in the SQL DB
 
     Args:
