@@ -2,7 +2,7 @@ import logging
 import sys
 import os
 from datetime import datetime
-import queue
+from multiprocessing import Queue
 from logging.handlers import TimedRotatingFileHandler
 import pytz
 
@@ -10,7 +10,7 @@ tz = pytz.timezone("Asia/Tokyo")
 
 LOG_FORMATTER = logging.Formatter("%(asctime)s - %(module)s - %(name)s - %(levelname)s - %(message)s")
 
-global_training_queue: queue.Queue = queue.Queue(-1)
+global_training_queue: Queue = Queue(-1)
 
 
 class SendToSocketTrainingLogHandler(logging.Handler):
@@ -68,7 +68,7 @@ def get_custom_logger(logger_name, add_console_logger: bool = True):
   logger.addHandler(get_error_file_handler())
 
   # with this pattern, it's rarely necessary to propagate the error up to parent
-  # logger.propagate = False
+  logger.propagate = False
 
   return logger
 
@@ -81,6 +81,6 @@ def get_custom_training_logger(logger_name):
   logger.addHandler(training_queue_handler)
 
   # with this pattern, it's rarely necessary to propagate the error up to parent
-  # logger.propagate = False
+  logger.propagate = False
 
   return logger

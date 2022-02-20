@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from datetime import datetime
-import queue
+from multiprocessing import Queue
 from logging import LogRecord
 
 import pytz

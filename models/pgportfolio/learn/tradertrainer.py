@@ -7,6 +7,9 @@ import json
 import os
 import time
 import collections
+import logging
+import logging.handlers
+from multiprocessing import Queue
 
 # import tflearn
 import numpy as np
@@ -39,7 +42,7 @@ Result = collections.namedtuple(
 
 class TraderTrainer:
 
-  def __init__(self, config, fake_data=False, restore_dir=None, save_path=None, device="cpu", agent=None):
+  def __init__(self, config, fake_data=False, restore_dir=None, save_path=None, device="cpu", agent=None, logging_q: Queue = None):
     """
         :param config: config dictionary
         :param fake_data: if True will use data generated randomly
@@ -48,6 +51,14 @@ class TraderTrainer:
         :param device: the device used to train the network
         :param agent: the nnagent object. If this is provided, the trainer will not create a new agent by itself. Therefore the restore_dir will not affect anything.
         """
+
+    # set up the logger
+    qh = logging.handlers.QueueHandler(logging_q)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(qh)
+
+    training_logger.info("TraderTrainer __init__()")
     self.config = config
     self.train_config = config["training"]
     self.input_config = config["input"]

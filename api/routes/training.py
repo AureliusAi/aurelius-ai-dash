@@ -263,14 +263,14 @@ def train_one_shot():
   if dataprovider != "":
     config["input"]["data_provider"] = dataprovider
 
-  training_logger.info("1. Constructing Training Input Params")
+  training_logger.info("1. (training) Constructing Training Input Params")
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logger.info("1. Training input Parameters")
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logger.info(json.dumps(config, indent=4, sort_keys=True))
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
-  training_logger.info("2. Download Historical Data")
+  training_logger.info("2. (training) Download Historical Data")
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logger.info("2. Download Historical Data")
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -285,13 +285,13 @@ def train_one_shot():
                              test_portion=float(testportion))
 
   # first delete existing training folders (if deleteExistingRuns=True), generate and then run training
-  training_logger.info("3. Constructing train_package, tensorboard etc., folders")
+  training_logger.info("3. (training) Constructing train_package, tensorboard etc., folders")
   repeat_option = 1  # TODO: move to UI/config. figure out what to do with it
   generate.add_packages(config, int(repeat_option), deleteExistingRuns)
 
   # # if not options.algo:
   # num_processes = config["input"]
-  training_logger.info("4. Start Training ...")
+  training_logger.info("4. (training) Start Training ...")
   status_code, status_msg = models.pgportfolio.autotrain.training.train_all(config, num_processes, device)
   # # else:
   # #     for folder in options.folder:

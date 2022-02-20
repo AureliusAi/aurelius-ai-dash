@@ -4,17 +4,17 @@ from __future__ import print_function
 
 import os
 import time
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from models.pgportfolio.learn.tradertrainer import TraderTrainer
 from models.pgportfolio.tools.configprocess import load_config
 import logging
-from common.custom_logger2 import get_custom_logger, get_custom_training_logger
+from common.custom_logger2 import get_custom_logger, get_custom_training_logger, global_training_queue
 
 logger = get_custom_logger(__name__)
 training_logger = get_custom_training_logger(__name__)
 
 
-def train_one(save_path: str, config: str, log_file_dir: str, index: str, logfile_level: int, console_level: int, device: str):
+def train_one(save_path: str, config: str, log_file_dir: str, index: str, logfile_level: int, console_level: int, device: str, logging_q: Queue):
   """
 
     train an agent
@@ -43,7 +43,7 @@ def train_one(save_path: str, config: str, log_file_dir: str, index: str, logfil
   training_logger.info("training_logger: RUNNING IN PROCESS!!!!!")
   training_logger.info("logger %s started" % index)
 
-  return TraderTrainer(config, save_path=save_path, device=device).train_net(log_file_dir=log_file_dir, index=index)
+  return TraderTrainer(config, save_path=save_path, device=device, logging_q=logging_q).train_net(log_file_dir=log_file_dir, index=index)
 
 
 def train_all(config: dict, processes: int = 1, device: str = "cpu"):
@@ -85,9 +85,12 @@ def train_all(config: dict, processes: int = 1, device: str = "cpu"):
     # NOTE: logfile is for compatibility reason.
     # We dont need to train if already trained.
     if not (os.path.isdir(os.path.join(package_dir, dir, "tensorboard")) or os.path.isdir(os.path.join(package_dir, dir, "logfile"))):
-      p = Process(target=train_one,
-                  args=(os.path.join(package_dir, dir, "netfile"), config, os.path.join(package_dir, dir,
-                                                                                        "tensorboard"), dir, logfile_level, console_level, device))
+      p = Process(
+          target=train_one,
+          args=(os.path.join(package_dir, dir,
+                             "netfile"), config, os.path.join(package_dir, dir,
+                                                              "tensorboard"), dir, logfile_level, console_level, device, global_training_queue),
+      )
       p.start()
       pool.append(p)
     else:

@@ -75,7 +75,7 @@ export default function TrainOneShot() {
 
   useLayoutEffect(() => {
     const PAST_DATE = new Date();
-    PAST_DATE.setMonth(PAST_DATE.getMonth() - 1);
+    PAST_DATE.setMonth(PAST_DATE.getMonth() - 12);
     setStartTrainDate(PAST_DATE);
   }, []);
 
@@ -582,7 +582,7 @@ export default function TrainOneShot() {
             </Button>
           </Box>
         </Box>
-        <Box id={'logterminal'} sx={{ border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 480px)", resize: "vertical", overflow: "auto" }}>
+        <Box id={'logterminal'} sx={{ fontFamily: 'monospace', border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 480px)", resize: "vertical", overflow: "auto" }}>
         {logDataStr}
         </Box>
 

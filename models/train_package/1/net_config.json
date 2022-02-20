@@ -3,7 +3,7 @@
     "input": {
         "coin_number": 11,
         "data_provider": "POLONIEX",
-        "end_date": "2022-02-19",
+        "end_date": "2022-02-20",
         "fake_ratio": 1,
         "feature_number": 3,
         "global_period": 1800,
@@ -13,7 +13,7 @@
         "online": false,
         "portion_reversed": false,
         "save_memory_mode": false,
-        "start_date": "2022-01-19",
+        "start_date": "2021-02-20",
         "test_portion": 0.08,
         "volume_average_days": 30,
         "window_size": 50
