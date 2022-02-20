@@ -93,7 +93,7 @@ def training_log_stream():
       emit("server-msg", {"data": log})
     except Exception as e:
       print(str(e))
-      logger.warning("LOG FILE TAMPERED WITH!! ignore....")
+      print("LOG FILE TAMPERED WITH!! ignore....")
 
 
 @socket_.on("echo_event", namespace="/api/ws/echo")

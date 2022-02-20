@@ -40,8 +40,8 @@ def train_one(save_path: str, config: str, log_file_dir: str, index: str, logfil
   logger.info("logger %s started" % index)
 
   logger.info("logger: RUNNING IN PROCESS!!!!!")
-  training_logger.info("training_logger: RUNNING IN PROCESS!!!!!")
-  training_logger.info("logger %s started" % index)
+  # training_logger.info("training_logger: RUNNING IN PROCESS!!!!!")
+  # training_logger.info("logger %s started" % index)
 
   return TraderTrainer(config, save_path=save_path, device=device, logging_q=logging_q).train_net(log_file_dir=log_file_dir, index=index)
 

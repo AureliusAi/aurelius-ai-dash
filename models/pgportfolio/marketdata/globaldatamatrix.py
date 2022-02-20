@@ -123,9 +123,12 @@ class HistoryManager:
     connection = sqlite3.connect(DATABASE_DIR)
     try:
       for row_number, coin in enumerate(coins):
-        logger.info("************************************************************")
-        logger.info(f"*******************   Processing {coin}   *********************")
-        logger.info("************************************************************")
+        logger.info("**********************************************************************")
+        process_line = ('*' * 20)
+        process_line += ' ' + f'Processing {coin}'.ljust(29)
+        process_line += ('*' * 20)
+        logger.info(process_line)
+        logger.info("**********************************************************************")
         training_logger.info('Processng historic data for: ' + coin)
         start_timeit = time.time()
         for feature in features:

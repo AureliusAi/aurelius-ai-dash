@@ -279,6 +279,7 @@ export default function TrainOneShot() {
   };
 
   const onClearConsole = (event: any) => {
+    fifo.splice(0, fifo.length);
     setLogData([]);
     setLogDataStr("");
   };

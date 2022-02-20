@@ -122,28 +122,26 @@ class TraderTrainer:
       self.train_writer.add_summary(summary, step)
 
     # print 'ouput is %s' % out
-    logger.info("=" * 30)
-    training_logger.info("=" * 30)
-    logger.info("step %d" % step)
-    training_logger.info("step %d" % step)
-    logger.info("-" * 30)
-    training_logger.info("=" * 30)
+    logger.info("=" * 50)
+    logger.info("step: %d" % step)
+    logger.info("=" * 50)
     if not fast_train:
       logger.info("training loss is %s\n" % loss_value)
-      training_logger.info("training loss is %s\n" % loss_value)
-    logger.info("the portfolio value on test set is %s\nlog_mean is %s\n"
-                "loss_value is %3f\nlog mean without commission fee is %3f\n" % (v_pv, v_log_mean, v_loss, log_mean_free))
-    training_logger.info("the portfolio value on test set is %s\nlog_mean is %s\n"
-                         "loss_value is %3f\nlog mean without commission fee is %3f\n" % (v_pv, v_log_mean, v_loss, log_mean_free))
-    logger.info("=" * 30 + "\n")
-    training_logger.info("=" * 30)
+    logger.info(f"  the portfolio value on the test is: {v_pv}")
+    logger.info(f"  Log_mean is: {v_log_mean}")
+    logger.info(f"  loss_value is: {v_loss}")
+    logger.info(f"  Log_mean is: {log_mean_free}")
+    logger.info(f"  log mean without commission fee is: {v_log_mean}")
+
+    # logger.info("the portfolio value on test set is %s\nlog_mean is %s\n"
+    #             "loss_value is %3f\nlog mean without commission fee is %3f\n" % (v_pv, v_log_mean, v_loss, log_mean_free))
+    logger.info("=" * 50)
 
     if not self.__snap_shot:
       self._agent.save_model(self.save_path)
     elif v_pv > self.best_metric:
       self.best_metric = v_pv
-      logger.info("get better model at %s steps,"
-                  " whose test portfolio value is %s" % (step, v_pv))
+      logger.info(f"!!!! Got better model at [{step}] steps, whose test portfolio value is [{v_pv}] !!!!")
       if self.save_path:
         self._agent.save_model(self.save_path)
     self.check_abnormal(v_pv, weights)
