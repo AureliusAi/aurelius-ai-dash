@@ -1,20 +1,21 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from models.pgportfolio.marketdata.datamatrices import DataMatrices
 from models.pgportfolio.tools.configprocess import preprocess_config
 
 
-def downloadHistoricData(startdtstr:str, enddtstr:str, 
-                          data_provider:str,
-                          coinnum:int, 
-                          featurenum:int, 
-                          windowsize:int, 
-                          globalperiod:str, 
-                          volume_avg_days:int, 
-                          test_portion:float,
-                          online:bool=True, 
-                          is_permed:bool=False,
-                          position_reversed:bool=False):
+def downloadHistoricData(startdtstr: str,
+                         enddtstr: str,
+                         data_provider: str,
+                         coinnum: int,
+                         featurenum: int,
+                         windowsize: int,
+                         globalperiod: str,
+                         volume_avg_days: int,
+                         test_portion: float,
+                         online: bool = True,
+                         is_permed: bool = False,
+                         position_reversed: bool = False):
   """Downloads historic data from the given data provider
 
   Args:
@@ -32,26 +33,25 @@ def downloadHistoricData(startdtstr:str, enddtstr:str,
   """
 
   # convert start/end to unix timestamps
-  startdtstr = startdtstr.replace('-','')
-  enddtstr = enddtstr.replace('-','')
+  startdtstr = startdtstr.replace('-', '')
+  enddtstr = enddtstr.replace('-', '')
 
-  start_dt = datetime.strptime(startdtstr,'%Y%m%d')
-  end_dt = datetime.strptime(enddtstr,'%Y%m%d')
+  start_dt = datetime.strptime(startdtstr, '%Y%m%d')
+  end_dt = datetime.strptime(enddtstr, '%Y%m%d')
+  end_dt = end_dt + timedelta(days=1)
 
   start = start_dt.replace(tzinfo=timezone.utc).timestamp()
   end = end_dt.replace(tzinfo=timezone.utc).timestamp()
 
-  DataMatrices(
-      start=start,
-      end=end,
-      data_provider=data_provider,
-      feature_number=featurenum,
-      window_size=windowsize,
-      online=online,
-      period=globalperiod,
-      volume_average_days=volume_avg_days,
-      coin_filter=coinnum,
-      is_permed=is_permed,
-      test_portion=test_portion,
-      portion_reversed=position_reversed
-  )
+  DataMatrices(start=start,
+               end=end,
+               data_provider=data_provider,
+               feature_number=featurenum,
+               window_size=windowsize,
+               online=online,
+               period=globalperiod,
+               volume_average_days=volume_avg_days,
+               coin_filter=coinnum,
+               is_permed=is_permed,
+               test_portion=test_portion,
+               portion_reversed=position_reversed)

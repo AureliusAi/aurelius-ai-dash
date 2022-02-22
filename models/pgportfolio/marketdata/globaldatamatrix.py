@@ -216,9 +216,11 @@ class HistoryManager:
       try:
         cursor = connection.cursor()
         cursor.execute(
-            "SELECT coin,SUM(volume) AS total_volume FROM History WHERE"
-            " date>=? and date<=? GROUP BY coin"
-            " ORDER BY total_volume DESC LIMIT ?;",
+            "SELECT coin,SUM(volume) AS total_volume, max(date) FROM History WHERE"
+            " date>=? and date<=? "
+            " GROUP BY coin"
+            " ORDER BY total_volume DESC "
+            " LIMIT ?;",
             (int(start), int(end), self._coin_number),
         )
         coins_tuples = cursor.fetchall()
@@ -233,8 +235,13 @@ class HistoryManager:
         coins.append(tuple[0])
     else:
       coins = list(self._coin_list.topNVolume(n=self._coin_number).index)
-    logger.debug("Selected coins are: " + str(coins))
-    training_logger.info("Selected coins are: " + str(coins))
+    logger.info('*' * 70)
+    logger.info('* Actual Selected Coins: ' + str(coins))
+    logger.info(
+        f'* start date: {datetime.fromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")}, end date: {datetime.fromtimestamp(end).strftime("%Y-%m-%d %H:%M:%S")}, coin num: {self._coin_number}'
+    )
+    logger.info('*' * 70)
+
     return coins
 
   def __checkperiod(self, period):
@@ -268,6 +275,7 @@ class HistoryManager:
             Exception: SQLite exception
         """
     connection = sqlite3.connect(DATABASE_DIR)
+    logger.info("update_data: processing coin: " + coin)
     try:
       cursor = connection.cursor()
       min_date = cursor.execute("SELECT MIN(date) FROM History WHERE coin=?;", (coin,)).fetchall()[0][0]
@@ -277,12 +285,15 @@ class HistoryManager:
         self.__fill_data(start, end, coin, cursor)
       else:
         if max_date + 10 * self.__storage_period < end:
-          if not self._online:
-            logger.error(
-                f"Issue with end date selected. Have to be online. end: {end}, max_date:{max_date}, storage_period:{self.__storage_period}, max_date+10*self.__storage_period: {max_date+10*self.__storage_period}"
-            )
-            raise Exception("Have to be online")
-          self.__fill_data(max_date + self.__storage_period, end, coin, cursor)
+
+          # removed this part as still want to train even if data right up to end
+          # if not self._online:
+          #   logger.error(
+          #       f"Issue with end date selected. Have to be online. end: {end}, max_date:{max_date}, storage_period:{self.__storage_period}, max_date+10*self.__storage_period: {max_date+10*self.__storage_period}"
+          #   )
+          #   raise Exception("Have to be online")
+          if self._online:
+            self.__fill_data(max_date + self.__storage_period, end, coin, cursor)
         if min_date > start and self._online:
           self.__fill_data(start, min_date - self.__storage_period - 1, coin, cursor)
 

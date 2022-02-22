@@ -282,8 +282,37 @@ class TraderTrainer:
     self.train_config
     self.input_config
     self.save_path
-    self.best_metric
     results_df
+
+    save_df = results_df.copy()
+
+    save_df.at[0, "input_window_size"] = self.input_config["window_size"]
+    save_df.at[0, "input_coin_number"] = self.input_config["coin_number"]
+    save_df.at[0, "input_global_period"] = self.input_config["global_period"]
+    save_df.at[0, "input_feature_num"] = self.input_config["feature_num"]
+    save_df.at[0, "input_test_portion"] = self.input_config["test_portion"]
+    save_df.at[0, "input_online"] = self.input_config["online"]
+    save_df.at[0, "input_start_date"] = self.input_config["start_date"]
+    save_df.at[0, "input_end_date"] = self.input_config["end_date"]
+    save_df.at[0, "input_volume_avg_days"] = self.input_config["volume_avg_days"]
+    save_df.at[0, "input_portion_reversed"] = self.input_config["portion_reversed"]
+    save_df.at[0, "input_data_provider"] = self.input_config["data_provider"]
+    save_df.at[0, "input_norm_method"] = self.input_config["norm_method"]
+    save_df.at[0, "input_is_permed"] = self.input_config["is_permed"]
+    save_df.at[0, "input_fake_ratio"] = self.input_config["fake_ratio"]
+    save_df.at[0, "input_fake_data"] = self.input_config["fake_data"]
+
+    save_df.at[0, "training_method"] = self.train_config["method"]
+    save_df.at[0, "training_nn_agent_name"] = self.train_config["loss_function"]
+    save_df.at[0, "training_loss_function"] = self.train_config["loss_function"]
+    save_df.at[0, "training_fast_train"] = self.train_config["fast_train"]
+    save_df.at[0, "training_num_epochs"] = self.train_config["num_epochs"]
+    save_df.at[0, "training_buffer_biased"] = self.train_config["buffer_biased"]
+    save_df.at[0, "training_learning_rate"] = self.train_config["learning_rate"]
+    save_df.at[0, "training_batch_size"] = self.train_config["batch_size"]
+    save_df.at[0, "training_snapshot"] = self.train_config["snapshot"]
+    save_df.at[0, "training_decay_rate"] = self.train_config["decay_rate"]
+    save_df.at[0, "training_decay_steps"] = self.train_config["decay_steps"]
 
     db = SqliteDataDB()
     db.insert_data_frame(results_df, 'Training_Results', if_exists='replace')

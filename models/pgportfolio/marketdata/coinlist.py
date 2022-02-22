@@ -68,7 +68,7 @@ class CoinList(object):
 
     self._df = self._df.set_index('coin')
     logger.info('*' * 70)
-    logger.info('*    COINLIST - Result ')
+    logger.info('*    COINLIST: Vol info FOR LAST 24 hours  ')
     logger.info('*' * 70)
 
     self._df = self._df.sort_values(by=['volume'], ascending=[False])

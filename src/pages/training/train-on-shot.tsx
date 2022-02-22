@@ -103,10 +103,8 @@ export default function TrainOneShot() {
         // setLogDataStr(logDataStr + "\n" + data);
         fifo.push(data)
         //setLogData((oldLogs: Array<string>) => [...oldLogs, data + "\n"]);
-        if(fifo.length > 10000) {
+        if(fifo.length > 1000) {
           const ssss = fifo.shift()
-          console.log('shifting!!!!!')
-          console.log(ssss)
         }
         setLogDataStr(fifo.join("<br />"));
         node.innerHTML = fifo.join("<br />")

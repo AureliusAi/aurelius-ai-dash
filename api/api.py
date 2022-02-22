@@ -89,8 +89,13 @@ def training_log_stream():
 
   while True:
     try:
-      log: LogRecord = global_training_queue.get(block=True)
-      emit("server-msg", {"data": log})
+      log = global_training_queue.get(block=True)
+      if isinstance(log, LogRecord) or isinstance(log, str):
+        emit("server-msg", {"data": log})
+      else:
+        print('!!log message is not instance of LogRecord/str!!')
+        print(type(log))
+        print(log)
     except Exception as e:
       print(str(e))
       print("LOG FILE TAMPERED WITH!! ignore....")
