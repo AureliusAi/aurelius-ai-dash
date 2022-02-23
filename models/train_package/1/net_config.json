@@ -13,7 +13,7 @@
         "online": false,
         "portion_reversed": false,
         "save_memory_mode": false,
-        "start_date": "2022-01-22",
+        "start_date": "2022-01-23",
         "test_portion": 0.08,
         "volume_average_days": 30,
         "window_size": 50
@@ -65,7 +65,7 @@
         "loss_function": "loss_function6",
         "nn_agent_name": "AA_CNN_MK1",
         "snap_shot": false,
-        "steps": 3000,
+        "steps": 50000,
         "training_method": "Adam"
     }
 }

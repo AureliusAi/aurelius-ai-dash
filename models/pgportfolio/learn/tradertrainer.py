@@ -229,11 +229,18 @@ class TraderTrainer:
     logger.warning("the portfolio value train No.%s is %s log_mean is %s,"
                    " the training time is %d seconds" % (index, pv, log_mean, time.time() - starttime))
 
-    training_result: collections.namedtuple = self.__log_result_csv(index, time.time() - starttime)
+    training_result: collections.namedtuple = self.__log_and_save_result(index, time.time() - starttime)
 
-    return training_result
+    # dont need to return training_result
+    logger.info("$" * 70)
+    logger.info("$" * 70)
+    logger.info("$ Training Results")
+    logger.info("$" * 70)
+    logger.info(training_result)
+    logger.info("$" * 70)
+    return
 
-  def __log_result_csv(self, index, time):
+  def __log_and_save_result(self, index, time):
     from models.pgportfolio.trade import backtest
 
     dataframe = None
@@ -289,46 +296,55 @@ class TraderTrainer:
     self.input_config
     self.save_path
     results_df
+    print(results_df)
+    print(results_df.index)
+    save_df = results_df.copy()
 
     # copy the training results to save_model_dir
     key: str = datetime.now(tz).strftime("%Y%m%d%H%M%S")
 
-    src_dir: str = Path(self.save_path).parent
-    dest_dir: str = os.path.join('models', 'saved_models', key)
+    src_dir: str = Path(self.save_path).parent.parent
+    for filename in os.listdir(src_dir):
+      if os.path.isdir(os.path.join(src_dir, filename)):
+        dest_dir: str = os.path.join('models', 'saved_models', f'{key}_{filename}')
+        copy_src_dir: str = os.path.join(src_dir, filename)
+        shutil.copytree(copy_src_dir, dest_dir, dirs_exist_ok=True)
 
-    shutil.copytree(src_dir, dest_dir, dirs_exist_ok=True)
+    idxs = []
+    for idx, row in save_df.iterrows():
+      print(f'idx: {idx}')
+      sub_key: str = f'{key}_{idx}'
+      idxs.append(sub_key)
+      save_df.loc[idx, "key"] = sub_key
+      save_df.loc[idx, "stored_path"] = str(os.path.join('models', 'saved_models', sub_key))
 
-    save_df = results_df.copy()
+    save_df["input_window_size"] = self.input_config["window_size"]
+    save_df["input_coin_number"] = self.input_config["coin_number"]
+    save_df["input_global_period"] = self.input_config["global_period"]
+    save_df["input_feature_number"] = self.input_config["feature_number"]
+    save_df["input_test_portion"] = self.input_config["test_portion"]
+    save_df["input_online"] = self.input_config["online"]
+    save_df["input_start_date"] = self.input_config["start_date"]
+    save_df["input_end_date"] = self.input_config["end_date"]
+    save_df["input_volume_average_days"] = self.input_config["volume_average_days"]
+    save_df["input_portion_reversed"] = self.input_config["portion_reversed"]
+    save_df["input_data_provider"] = self.input_config["data_provider"]
+    save_df["input_norm_method"] = self.input_config["norm_method"]
+    save_df["input_is_permed"] = self.input_config["is_permed"]
+    save_df["input_fake_ratio"] = self.input_config["fake_ratio"]
+    save_df["input_fake_data"] = self.input_config["fake_data"]
 
-    save_df.loc[0, "key"] = key
-    save_df.loc[0, "stored_path"] = str(dest_dir)
-    save_df.loc[0, "input_window_size"] = self.input_config["window_size"]
-    save_df.loc[0, "input_coin_number"] = self.input_config["coin_number"]
-    save_df.loc[0, "input_global_period"] = self.input_config["global_period"]
-    save_df.loc[0, "input_feature_number"] = self.input_config["feature_number"]
-    save_df.loc[0, "input_test_portion"] = self.input_config["test_portion"]
-    save_df.loc[0, "input_online"] = self.input_config["online"]
-    save_df.loc[0, "input_start_date"] = self.input_config["start_date"]
-    save_df.loc[0, "input_end_date"] = self.input_config["end_date"]
-    save_df.loc[0, "input_volume_average_days"] = self.input_config["volume_average_days"]
-    save_df.loc[0, "input_portion_reversed"] = self.input_config["portion_reversed"]
-    save_df.loc[0, "input_data_provider"] = self.input_config["data_provider"]
-    save_df.loc[0, "input_norm_method"] = self.input_config["norm_method"]
-    save_df.loc[0, "input_is_permed"] = self.input_config["is_permed"]
-    save_df.loc[0, "input_fake_ratio"] = self.input_config["fake_ratio"]
-    save_df.loc[0, "input_fake_data"] = self.input_config["fake_data"]
-
-    #save_df.loc[0, "training_method"] = self.train_config["method"]
-    save_df.loc[0, "training_nn_agent_name"] = self.train_config["nn_agent_name"]
-    save_df.loc[0, "training_loss_function"] = self.train_config["loss_function"]
-    save_df.loc[0, "training_fast_train"] = self.train_config["fast_train"]
-    save_df.loc[0, "training_num_epochs"] = self.train_config["steps"]
-    save_df.loc[0, "training_buffer_biased"] = self.train_config["buffer_biased"]
-    save_df.loc[0, "training_learning_rate"] = self.train_config["learning_rate"]
-    save_df.loc[0, "training_batch_size"] = self.train_config["batch_size"]
-    save_df.loc[0, "training_snapshot"] = self.train_config["snap_shot"]
-    save_df.loc[0, "training_decay_rate"] = self.train_config["decay_rate"]
-    save_df.loc[0, "training_decay_steps"] = self.train_config["decay_steps"]
+    #save_df["training_method"] = self.train_config["method"]
+    save_df["training_nn_agent_name"] = self.train_config["nn_agent_name"]
+    save_df["training_loss_function"] = self.train_config["loss_function"]
+    save_df["training_fast_train"] = self.train_config["fast_train"]
+    save_df["training_num_epochs"] = self.train_config["steps"]
+    save_df["training_buffer_biased"] = self.train_config["buffer_biased"]
+    save_df["training_learning_rate"] = self.train_config["learning_rate"]
+    save_df["training_batch_size"] = self.train_config["batch_size"]
+    save_df["training_snapshot"] = self.train_config["snap_shot"]
+    save_df["training_decay_rate"] = self.train_config["decay_rate"]
+    save_df["training_decay_steps"] = self.train_config["decay_steps"]
 
     db = SqliteDataDB()
-    db.insert_data_frame(save_df, 'Training_Results', if_exists='replace')
+    db.insert_data_frame(save_df, 'Training_Results', if_exists='append')

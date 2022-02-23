@@ -43,7 +43,9 @@ def train_one(save_path: str, config: str, log_file_dir: str, index: str, logfil
   # training_logger.info("training_logger: RUNNING IN PROCESS!!!!!")
   # training_logger.info("logger %s started" % index)
 
-  return TraderTrainer(config, save_path=save_path, device=device, logging_q=logging_q).train_net(log_file_dir=log_file_dir, index=index)
+  TraderTrainer(config, save_path=save_path, device=device, logging_q=logging_q).train_net(log_file_dir=log_file_dir, index=index)
+
+  logger.info("Training complete")
 
 
 def train_all(config: dict, processes: int = 1, device: str = "cpu"):
@@ -77,6 +79,8 @@ def train_all(config: dict, processes: int = 1, device: str = "cpu"):
   pool = []
   status_msg = ''
   for dir in all_subdir:
+    if os.path.isdir(os.path.join(package_dir, dir)) == False:  #i.e. if the dir is not actually a dir
+      continue
     # train only if the dir is numeric
     logger.info(f'processing dir: {dir}')
     if not str.isdigit(dir):
