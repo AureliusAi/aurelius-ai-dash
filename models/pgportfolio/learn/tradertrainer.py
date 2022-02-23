@@ -5,11 +5,17 @@ from __future__ import division
 from __future__ import print_function
 import json
 import os
+import shutil
 import time
 import collections
 import logging
 import logging.handlers
+from datetime import datetime
+import pytz
+from pathlib import Path
 from multiprocessing import Queue
+
+tz = pytz.timezone("Asia/Tokyo")
 
 # import tflearn
 import numpy as np
@@ -284,35 +290,45 @@ class TraderTrainer:
     self.save_path
     results_df
 
+    # copy the training results to save_model_dir
+    key: str = datetime.now(tz).strftime("%Y%m%d%H%M%S")
+
+    src_dir: str = Path(self.save_path).parent
+    dest_dir: str = os.path.join('models', 'saved_models', key)
+
+    shutil.copytree(src_dir, dest_dir, dirs_exist_ok=True)
+
     save_df = results_df.copy()
 
-    save_df.at[0, "input_window_size"] = self.input_config["window_size"]
-    save_df.at[0, "input_coin_number"] = self.input_config["coin_number"]
-    save_df.at[0, "input_global_period"] = self.input_config["global_period"]
-    save_df.at[0, "input_feature_num"] = self.input_config["feature_num"]
-    save_df.at[0, "input_test_portion"] = self.input_config["test_portion"]
-    save_df.at[0, "input_online"] = self.input_config["online"]
-    save_df.at[0, "input_start_date"] = self.input_config["start_date"]
-    save_df.at[0, "input_end_date"] = self.input_config["end_date"]
-    save_df.at[0, "input_volume_avg_days"] = self.input_config["volume_avg_days"]
-    save_df.at[0, "input_portion_reversed"] = self.input_config["portion_reversed"]
-    save_df.at[0, "input_data_provider"] = self.input_config["data_provider"]
-    save_df.at[0, "input_norm_method"] = self.input_config["norm_method"]
-    save_df.at[0, "input_is_permed"] = self.input_config["is_permed"]
-    save_df.at[0, "input_fake_ratio"] = self.input_config["fake_ratio"]
-    save_df.at[0, "input_fake_data"] = self.input_config["fake_data"]
+    save_df.loc[0, "key"] = key
+    save_df.loc[0, "stored_path"] = str(dest_dir)
+    save_df.loc[0, "input_window_size"] = self.input_config["window_size"]
+    save_df.loc[0, "input_coin_number"] = self.input_config["coin_number"]
+    save_df.loc[0, "input_global_period"] = self.input_config["global_period"]
+    save_df.loc[0, "input_feature_number"] = self.input_config["feature_number"]
+    save_df.loc[0, "input_test_portion"] = self.input_config["test_portion"]
+    save_df.loc[0, "input_online"] = self.input_config["online"]
+    save_df.loc[0, "input_start_date"] = self.input_config["start_date"]
+    save_df.loc[0, "input_end_date"] = self.input_config["end_date"]
+    save_df.loc[0, "input_volume_average_days"] = self.input_config["volume_average_days"]
+    save_df.loc[0, "input_portion_reversed"] = self.input_config["portion_reversed"]
+    save_df.loc[0, "input_data_provider"] = self.input_config["data_provider"]
+    save_df.loc[0, "input_norm_method"] = self.input_config["norm_method"]
+    save_df.loc[0, "input_is_permed"] = self.input_config["is_permed"]
+    save_df.loc[0, "input_fake_ratio"] = self.input_config["fake_ratio"]
+    save_df.loc[0, "input_fake_data"] = self.input_config["fake_data"]
 
-    save_df.at[0, "training_method"] = self.train_config["method"]
-    save_df.at[0, "training_nn_agent_name"] = self.train_config["loss_function"]
-    save_df.at[0, "training_loss_function"] = self.train_config["loss_function"]
-    save_df.at[0, "training_fast_train"] = self.train_config["fast_train"]
-    save_df.at[0, "training_num_epochs"] = self.train_config["num_epochs"]
-    save_df.at[0, "training_buffer_biased"] = self.train_config["buffer_biased"]
-    save_df.at[0, "training_learning_rate"] = self.train_config["learning_rate"]
-    save_df.at[0, "training_batch_size"] = self.train_config["batch_size"]
-    save_df.at[0, "training_snapshot"] = self.train_config["snapshot"]
-    save_df.at[0, "training_decay_rate"] = self.train_config["decay_rate"]
-    save_df.at[0, "training_decay_steps"] = self.train_config["decay_steps"]
+    #save_df.loc[0, "training_method"] = self.train_config["method"]
+    save_df.loc[0, "training_nn_agent_name"] = self.train_config["nn_agent_name"]
+    save_df.loc[0, "training_loss_function"] = self.train_config["loss_function"]
+    save_df.loc[0, "training_fast_train"] = self.train_config["fast_train"]
+    save_df.loc[0, "training_num_epochs"] = self.train_config["steps"]
+    save_df.loc[0, "training_buffer_biased"] = self.train_config["buffer_biased"]
+    save_df.loc[0, "training_learning_rate"] = self.train_config["learning_rate"]
+    save_df.loc[0, "training_batch_size"] = self.train_config["batch_size"]
+    save_df.loc[0, "training_snapshot"] = self.train_config["snap_shot"]
+    save_df.loc[0, "training_decay_rate"] = self.train_config["decay_rate"]
+    save_df.loc[0, "training_decay_steps"] = self.train_config["decay_steps"]
 
     db = SqliteDataDB()
-    db.insert_data_frame(results_df, 'Training_Results', if_exists='replace')
+    db.insert_data_frame(save_df, 'Training_Results', if_exists='replace')

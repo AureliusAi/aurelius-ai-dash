@@ -3,7 +3,7 @@
     "input": {
         "coin_number": 11,
         "data_provider": "POLONIEX",
-        "end_date": "2022-02-22",
+        "end_date": "2022-02-23",
         "fake_ratio": 1,
         "feature_number": 3,
         "global_period": 1800,
@@ -13,7 +13,7 @@
         "online": false,
         "portion_reversed": false,
         "save_memory_mode": false,
-        "start_date": "2022-01-20",
+        "start_date": "2022-01-22",
         "test_portion": 0.08,
         "volume_average_days": 30,
         "window_size": 50
@@ -65,7 +65,7 @@
         "loss_function": "loss_function6",
         "nn_agent_name": "AA_CNN_MK1",
         "snap_shot": false,
-        "steps": 5000,
+        "steps": 3000,
         "training_method": "Adam"
     }
 }
