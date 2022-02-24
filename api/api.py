@@ -1,7 +1,3 @@
-from logging.handlers import QueueHandler, QueueListener
-import logging
-import os
-import sys
 from datetime import datetime
 from multiprocessing import Queue
 from logging import LogRecord
@@ -16,6 +12,7 @@ from routes.config import config_pages
 # import all the pages
 from routes.data import data_pages
 from routes.training import training_pages
+from routes.models import model_pages
 
 from common.custom_logger2 import get_custom_logger, get_custom_training_logger
 from common.custom_logger2 import global_training_queue
@@ -26,17 +23,6 @@ tz = pytz.timezone("Asia/Tokyo")
 # Set up Logging - this shoudl be the only place the logging config is being set up
 ########################################################################################
 
-# logging_queue = queue.Queue(-1)
-
-# class SendToSocketTrainingLogHandler(logging.Handler):
-#   formatter = logging.Formatter("[%(asctime)s]%(module)s:%(lineno)d[%(levelname)s]%(message)s")
-
-#   def emit(self, record):
-#     log_entry = self.format(record)
-#     logging_queue.put(log_entry)
-
-# logger = custom_logging.MainLogger(log_name="main", log_file_name="Syslog", error_file_name="Error_Syslog")
-# training_logger = custom_logging.MainLogger(log_name="training", add_console_handler=False, trainingloghandler=SendToSocketTrainingLogHandler())
 logger = get_custom_logger(__name__)
 logger.info("starting log")
 
@@ -55,6 +41,7 @@ cors = CORS(app)
 app.register_blueprint(data_pages)
 app.register_blueprint(training_pages)
 app.register_blueprint(config_pages)
+app.register_blueprint(model_pages)
 
 # socket_ = SocketIO(app, async_mode=None)
 # |cors_allowed_origins| is required for localhost testing.

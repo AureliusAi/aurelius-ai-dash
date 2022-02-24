@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, request, jsonify, make_response,url_for,redirect
+from flask import Blueprint, request, jsonify, make_response, url_for, redirect
 from datetime import datetime
 import dateutil.parser
 import time
@@ -36,7 +36,7 @@ def get_avail_nn_names():
     res['nn_list'] = []
     res['error_msg'] = error_msg
     return res
-    
+
   nn_list = df['instance_name'].unique().tolist()
 
   res = dict()
@@ -65,17 +65,18 @@ def get_all_nn_instances():
     res['nn_instances'] = []
     res['error_msg'] = error_msg
     return res
-  
+
   res = dict()
   res['nn_instances'] = df.to_json(orient="records")
 
   return res
 
+
 @config_pages.post("/api/config/nn/update-instance")
 def update_nn_instance():
 
-  inst_name:str = request.json['instance_to_update']
-  inst_definition:str = request.json['instance_definition_to_update']
+  inst_name: str = request.json['instance_to_update']
+  inst_definition: str = request.json['instance_definition_to_update']
 
   # first get the latest version and user
   # note because we are creating a new entry in the DB, we need to get the Create Date because we want to keep the orginal
@@ -91,7 +92,7 @@ def update_nn_instance():
     Order by `UpdateDate` desc
     LIMIT 1
   """
-  df_existing, error_msg= db.qry_read_data(qry)
+  df_existing, error_msg = db.qry_read_data(qry)
   if df_existing is None:
     res = dict()
     res['is_error'] = True
@@ -106,7 +107,7 @@ def update_nn_instance():
   input_list = []
   input_list.append((inst_name, next_ver, inst_definition, created_date, created_user))
   is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Version, Definition, CreateDate, CreateUser) VALUES (?, ?, ?, ?, ?)", input_list)
-  
+
   db = SqliteDataDB()
   qry = f"""
     select `Name` as instance_name, `Version`, `CreateDate`, `UpdateDate` 
@@ -121,8 +122,8 @@ def update_nn_instance():
     res = dict()
     res['is_error'] = True
     res['error_msg'] = error_msg
-    return res  
-  else: 
+    return res
+  else:
     create_date = df_existing['CreateDate'].values[0]
     update_date = df_existing['UpdateDate'].values[0]
 
@@ -142,8 +143,8 @@ def update_nn_instance():
 @config_pages.post("/api/config/nn/delete-instance")
 def delete_nn_instance():
 
-  inst_name:str = request.json['instance_to_delete']
-  inst_version:str = request.json['instance_version_to_delete']
+  inst_name: str = request.json['instance_to_delete']
+  inst_version: str = request.json['instance_version_to_delete']
 
   db = SqliteDataDB()
   qry = f"""
@@ -154,7 +155,7 @@ def delete_nn_instance():
   """
   print(f'delete NN instance: {qry}')
   updated_rows, is_error, error_msg = db.update_or_delete_data(qry)
-  
+
   res = dict()
   res['is_error'] = is_error
   res['error_msg'] = error_msg
@@ -164,15 +165,13 @@ def delete_nn_instance():
 
 @config_pages.post("/api/config/nn/save-new-instance")
 def save_new_neural_network():
-
   """
   Retrieves a list of coins either between a start and end date or all the coins available in the History DB
   """
 
-  inst_name:str = request.json['inst_name']
-  inst_definition:str = json.dumps(request.json['inst_definition'])
-  user:str = request.json['user']
-
+  inst_name: str = request.json['inst_name']
+  inst_definition: str = json.dumps(request.json['inst_definition'])
+  user: str = request.json['user']
 
   print("============== save_new_neural_network ================")
   print(f'inst_name: {inst_name}')

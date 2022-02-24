@@ -36,6 +36,8 @@ settings.json
 # log files
 *.log
 
+*.eps
+
 # database and training packages
 models/database/
 models/train_package/

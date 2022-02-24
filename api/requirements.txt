@@ -4,3 +4,4 @@ python-dotenv
 flask-sock
 sqlalchemy
 tensorflow
+cvxopt
