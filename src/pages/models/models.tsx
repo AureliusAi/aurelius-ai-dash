@@ -144,7 +144,10 @@ function Models() {
         ></AgGridReact>
       </div>
       <Box mt={2}>
-        { chartData && (
+        { plotLoading ? (
+            <LinearProgress />
+        ):(      
+        chartData && (
           <Plot
           data={[
             {
@@ -157,10 +160,11 @@ function Models() {
           ]}
           layout={{width: 800, height: 500, title: 'Training Result'} }
         />
-        )}
+        ) )}
         </Box>
         </Box>
       ))}
+      
     </Box>
   );
 }
