@@ -57,6 +57,7 @@ class TraderTrainer:
         :param save_path: path to save the model
         :param device: the device used to train the network
         :param agent: the nnagent object. If this is provided, the trainer will not create a new agent by itself. Therefore the restore_dir will not affect anything.
+        :param logging_q: the threadsafe queue used to push logging message
         """
 
     # set up the logger

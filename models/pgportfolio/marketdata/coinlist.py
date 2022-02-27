@@ -75,7 +75,7 @@ class CoinList(object):
     counter: int = 1
     for coin, row in self._df.iterrows():
       vol: float = round(float(row['volume']), 4)
-      log_str: str = "[{idx}], Coin: {coin}, Pair: {pair}, Volumn: ".format(idx=str(counter), coin=coin, pair=row['pair'])
+      log_str: str = "[{idx}], Coin: {coin}, Pair: {pair}, price: {price}, Volume: ".format(idx=str(counter), coin=coin, price=row['price'], pair=row['pair'])
       log_str = log_str.ljust(55)
       log_str += str(vol).rjust(15)
       logger.info(log_str)

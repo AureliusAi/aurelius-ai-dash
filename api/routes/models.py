@@ -62,6 +62,7 @@ def get_all_nn_instances():
       input_window_size,
       input_test_portion,
       training_learning_rate,
+      training_fast_train,
       training_time,
       stored_path,
       config

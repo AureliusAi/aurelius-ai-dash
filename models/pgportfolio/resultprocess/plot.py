@@ -69,6 +69,9 @@ def plot_backtest_using_trained_model(config, result_history, algos, labels=None
   start, end = _extract_test(config)
   timestamps = np.linspace(start, end, len(results[0]))
   dates = [datetime.datetime.fromtimestamp(int(ts) - int(ts) % config["input"]["global_period"]) for ts in timestamps]
+  unix_dates = [(int(ts) - int(ts) % config["input"]["global_period"]) for ts in timestamps]
+
+  btc_px_list: list = get_btc_px_for_dates(unix_dates)
 
   weeks = mdates.WeekdayLocator()
   days = mdates.DayLocator()
@@ -113,8 +116,30 @@ def plot_backtest_using_trained_model(config, result_history, algos, labels=None
   chart_data['XMax'] = datemax
   chart_data['XMin'] = datemin
   chart_data['Data'] = pv_list.tolist()
+  chart_data['BTC_PX_Data'] = btc_px_list
   chart_data['Labels'] = labels
   return chart_data
+
+
+def get_btc_px_for_dates(dates: list):
+  """
+
+  Given a date range, return the px for btcusd
+
+  Args:
+      dates (list): a list of dates for which to get BTC USD price
+  """
+
+  btc_px_qry = """
+    select date, 1/open as BTCUSD from History
+    where coin = 'reversed_USDT'
+    order by date
+  """
+
+  db = SqliteDataDB()
+  df, error_msg = db.qry_read_data(btc_px_qry)
+  df2 = df[df['date'].isin(dates)]
+  return list(df2['BTCUSD'])
 
 
 def plot_backtest(config, algos, labels=None):

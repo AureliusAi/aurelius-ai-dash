@@ -32,7 +32,7 @@ const MenuProps = {
   },
 };
 
-const fifo:Array<string> = [];
+const fifo: Array<string> = [];
 
 export default function TrainOneShot() {
   const theme = useTheme();
@@ -57,6 +57,7 @@ export default function TrainOneShot() {
   const [volumeAverageDays, setVolumeAverageDays] = useState<number>(30);
   const [testPortion, setTestPortion] = useState<number>(8);
   const [numberOfFeatures, setNumberOfFeatures] = useState<number>(3);
+  const [fastTrain, setFastTrain] = useState<string>("True");
   const [dataProvider, setDataProvider] = useState<string>("POLONIEX");
   const [availNNs, setAvailNNs] = useState<string[] | null>(null);
   const [retrieveNNError, setRetrieveNNError] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export default function TrainOneShot() {
   const [logData, setLogData] = useState<Array<string>>(fifo);
   const [logDataStr, setLogDataStr] = useState<string>("");
 
-  const node = document.querySelectorAll('#logterminal')[0];
+  const node = document.querySelectorAll("#logterminal")[0];
 
   useLayoutEffect(() => {
     const PAST_DATE = new Date();
@@ -92,22 +93,22 @@ export default function TrainOneShot() {
   // }, [nnNotSetError]);
 
   useEffect(() => {
-    console.log('isTrainingRunning:' + isTrainingRunning)
+    console.log("isTrainingRunning:" + isTrainingRunning);
     if (isTrainingRunning === true) {
       if (logType) initiateLogSocket(logType);
-      console.log("initing log")
+      console.log("initing log");
 
       subscribeToLog((err: string, data: string) => {
         if (err) return;
-        console.log("LOG STREAM: " + data)
+        console.log("LOG STREAM: " + data);
         // setLogDataStr(logDataStr + "\n" + data);
-        fifo.push(data)
+        fifo.push(data);
         //setLogData((oldLogs: Array<string>) => [...oldLogs, data + "\n"]);
-        if(fifo.length > 1000) {
-          const ssss = fifo.shift()
+        if (fifo.length > 1000) {
+          const ssss = fifo.shift();
         }
         setLogDataStr(fifo.join("<br />"));
-        node.innerHTML = fifo.join("<br />")
+        node.innerHTML = fifo.join("<br />");
         // setLogData(fifo)
       });
       return () => {
@@ -190,6 +191,7 @@ export default function TrainOneShot() {
         numprocesses: parseInt(processes),
         deleteExistingRuns: deleteExistingRuns,
         device: device,
+        fasttrain: fastTrain,
         numberepochs: numberEpochs,
         globalperiod: globalPeriod,
         windowsize: windowSize,
@@ -223,7 +225,7 @@ export default function TrainOneShot() {
 
   function onRunOneShotTraining(event: React.MouseEvent) {
     setTrainingStatusMsg(null);
-    setLogDataStr("")
+    setLogDataStr("");
     setLogData([]);
 
     // check we have all the input params set
@@ -261,6 +263,10 @@ export default function TrainOneShot() {
 
   const handleDeviceTypeChange = (event: SelectChangeEvent) => {
     setDevice(event.target.value);
+  };
+
+  const handleFastTrainChange = (event: SelectChangeEvent) => {
+    setFastTrain(event.target.value);
   };
 
   const handleNNSelectionChanged = (event: SelectChangeEvent<typeof nnToGet>) => {
@@ -302,7 +308,11 @@ export default function TrainOneShot() {
               mask="____-__-__"
               value={startTrainDate}
               onChange={(date: Date | null) => {
-                setStartTrainDate(date);
+                if (date != null) {
+                  if (!isNaN(date.getTime())) {
+                    setStartTrainDate(date);
+                  }
+                }
               }}
               renderInput={(params) => <TextField sx={{ width: "150px" }} {...params} />}
             />
@@ -567,6 +577,21 @@ export default function TrainOneShot() {
             }}
           />
         </Box>
+        <FormControl sx={{ minWidth: 100, marginLeft: 2 }}>
+          <InputLabel id="fast-train-select-label">Fast Train</InputLabel>
+          <Select
+            value={fastTrain}
+            id="fast-train-select-label"
+            onChange={handleFastTrainChange}
+            displayEmpty
+            autoWidth
+            label="Fast Train"
+            inputProps={{ "aria-label": "Whether to fast train or not" }}
+          >
+            <MenuItem value="False">FALSE</MenuItem>
+            <MenuItem value="True">TRUE</MenuItem>
+          </Select>
+        </FormControl>
         <Box ml={2}>{trainingStatusMsg ? trainingStatusMsg : <span />}</Box>
       </Box>
       <Box mt={2}>
@@ -580,8 +605,11 @@ export default function TrainOneShot() {
             </Button>
           </Box>
         </Box>
-        <Box id={'logterminal'} sx={{ fontFamily: 'monospace', border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 540px)", resize: "vertical", overflow: "auto" }}>
-        {logDataStr}
+        <Box
+          id={"logterminal"}
+          sx={{ fontFamily: "monospace", border: "1px #CCCCCC solid", width: "100%", height: "calc(100vh - 540px)", resize: "vertical", overflow: "auto" }}
+        >
+          {logDataStr}
         </Box>
 
         {/* <TextareaAutosize

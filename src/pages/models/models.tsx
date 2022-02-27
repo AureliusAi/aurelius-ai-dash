@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
-import LinearProgress from '@mui/material/LinearProgress';
+import LinearProgress from "@mui/material/LinearProgress";
 import PageHeader, { H2Title } from "../../page-components/PageHeader";
 import { API_MODELS_ENDPOINT } from "../../endpoints";
 import { AgGridReact } from "ag-grid-react";
 import { CellClickedEvent } from "ag-grid-community/dist/lib/events";
-import Plot from 'react-plotly.js';
+import Plot from "react-plotly.js";
 
 function Models() {
   const [modelData, setModelData] = useState(null);
   const [chartData, setChartData] = useState<boolean | null>(null);
   const [gridApi, setGridApi] = useState(null);
 
-  const [dataRetError, setDataRetError] = useState(null)
-  const [dataRetLoading, setDataRetLoading] = useState(false)
+  const [dataRetError, setDataRetError] = useState(null);
+  const [dataRetLoading, setDataRetLoading] = useState(false);
 
-  const [plotError, setPlotError] = useState(null)
-  const [plotLoading, setPlotLoading] = useState(false)
+  const [plotError, setPlotError] = useState(null);
+  const [plotLoading, setPlotLoading] = useState(false);
 
-  const [yAxis, setYAxis] = useState<Array<number>>([])
-    const [timeAxis, setTimeAxis] = useState<Array<Date>>([])
+  const [yAxis, setYAxis] = useState<Array<number>>([]);
+  const [bctYAxis, setBTCYAxcis] = useState<Array<number>>([]);
+  const [timeAxis, setTimeAxis] = useState<Array<Date>>([]);
 
   const refreshNNFromDB = () => {
     setDataRetError(null);
@@ -50,15 +51,15 @@ function Models() {
   }, []);
 
   const modelDataTableColDefs = [
-    { headerName: "Key", field: "key", width: 150, type: 'nonEditableColumn'  },
-    { headerName: "Test PV", field: "test_pv" , width: 120 },
-    { headerName: "Test Log Mean", field: "test_log_mean", width: 130  },
+    { headerName: "Key", field: "key", width: 150, type: "nonEditableColumn" },
+    { headerName: "Test PV", field: "test_pv", width: 120 },
+    { headerName: "Test Log Mean", field: "test_log_mean", width: 130 },
     { headerName: "Test Log Mean Free", field: "test_log_mean_free", width: 160 },
     { headerName: "BackTest PV", field: "backtest_test_pv", width: 120 },
     { headerName: "BackTest Log Mean", field: "backtest_test_log_mean", width: 160 },
     { headerName: "Start Date", field: "input_start_date", width: 110 },
-    { headerName: "End Date", field: "input_end_date", width: 110},
-    { headerName: "Coin #", field: "input_coin_number", width: 90},
+    { headerName: "End Date", field: "input_end_date", width: 110 },
+    { headerName: "Coin #", field: "input_coin_number", width: 90 },
     { headerName: "# Epochs", field: "training_num_epochs", width: 110 },
     { headerName: "Test Portion", field: "input_test_portion", width: 120 },
     { headerName: "NN Agent", field: "training_nn_agent_name", width: 110 },
@@ -67,13 +68,14 @@ function Models() {
     { headerName: "Window Size", field: "input_window_size", width: 120 },
     { headerName: "Feature #", field: "input_feature_number", width: 110 },
     { headerName: "Training Time", field: "training_time", width: 120 },
-    { headerName: "Config", field: "config" , width: 300 },
-    { headerName: "Stored Path", field: "stored_path" , width: 300 },
+    { headerName: "Fast Train", field: "training_fast_train", width: 100 },
+    { headerName: "Config", field: "config", width: 300 },
+    { headerName: "Stored Path", field: "stored_path", width: 300 },
   ];
 
   // define a column type (you can define as many as you like)
   const columnTypes = {
-    nonEditableColumn: { editable: false }
+    nonEditableColumn: { editable: false },
   };
 
   const onGridReady = (param: any) => {
@@ -81,8 +83,8 @@ function Models() {
   };
 
   const modelRowDoubleClicked = (event: CellClickedEvent) => {
-    const selected_key = event.data['key']
-    console.log('Cell was clicked.' + event.data['key'])
+    const selected_key = event.data["key"];
+    console.log("Cell was clicked." + event.data["key"]);
     // get table/plot
     // /api/config/models/plot
     const plotOptions = {
@@ -98,10 +100,11 @@ function Models() {
       .then(
         (result) => {
           let cd = JSON.parse(result.chartData);
-          setTimeAxis(cd['XAxis'])
-          setYAxis(cd['Data'])
+          setTimeAxis(cd["XAxis"]);
+          setYAxis(cd["Data"]);
+          setBTCYAxcis(cd["BTC_PX_Data"]);
           setChartData(cd);
-          console.log(cd)
+          console.log(cd);
         },
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
@@ -116,55 +119,90 @@ function Models() {
       .finally(() => {
         setPlotLoading(false);
       });
-  }
+  };
 
   return (
     <Box sx={{ p: 0, m: 0 }}>
       <H2Title>Trained Models</H2Title>
       {dataRetLoading ? (
-          <LinearProgress />
-        ) : (
-          dataRetError ? (
-            <Box sx={{color:'#FF3333'}}>{dataRetError}</Box>
-          ) : (
-            <Box>
-      <div className="ag-theme-balham" style={{ height: "300px", width: "100%" }}>
-        <AgGridReact
-          rowData={modelData}
-          columnDefs={modelDataTableColDefs}
-          defaultColDef={{
-            sortable: true,
-            editable: true,
-            filter: true,
-            floatingFilter: true,
-          }}
-          onRowDoubleClicked={modelRowDoubleClicked}
-          columnTypes={columnTypes}
-          onGridReady={onGridReady}
-        ></AgGridReact>
-      </div>
-      <Box mt={2}>
-        { plotLoading ? (
-            <LinearProgress />
-        ):(      
-        chartData && (
-          <Plot
-          data={[
-            {
-              x: timeAxis,
-              y: yAxis,
-              type: 'scatter',
-              mode: 'lines+markers',
-              marker: {color: 'red'},
-            },
-          ]}
-          layout={{width: 800, height: 500, title: 'Training Result'} }
-        />
-        ) )}
+        <LinearProgress />
+      ) : dataRetError ? (
+        <Box sx={{ color: "#FF3333" }}>{dataRetError}</Box>
+      ) : (
+        <Box>
+          <div className="ag-theme-balham" style={{ height: "300px", width: "100%" }}>
+            <AgGridReact
+              rowData={modelData}
+              columnDefs={modelDataTableColDefs}
+              defaultColDef={{
+                sortable: true,
+                editable: true,
+                filter: true,
+                floatingFilter: true,
+              }}
+              onRowDoubleClicked={modelRowDoubleClicked}
+              columnTypes={columnTypes}
+              onGridReady={onGridReady}
+            ></AgGridReact>
+          </div>
+          <Box mt={2}>
+            {plotLoading ? (
+              <LinearProgress />
+            ) : (
+              chartData && (
+                <Plot
+                  data={[
+                    {
+                      x: timeAxis,
+                      y: yAxis,
+                      name: "Test Result (Units of Btc)",
+                      type: "scatter",
+                      mode: "lines",
+                      marker: { color: "red" },
+                    },
+                    {
+                      x: timeAxis,
+                      y: bctYAxis,
+                      name: "BTC USD Px",
+                      marker: { color: "#00bfff" },
+                      yaxis: "y2",
+                      type: "scatter",
+                    },
+                  ]}
+                  layout={{
+                    width: 1000,
+                    height: 450,
+                    margin: {
+                      t: 10,
+                      b: 45,
+                    },
+                    showlegend: true,
+                    legend: { orientation: "h", x: 0, y: 1.1 },
+                    xaxis: {
+                      title: "Test Date Range",
+                      type: "date",
+                      tickformat: "%Y-%m-%d",
+                    },
+                    yaxis: {
+                      title: "Testing Results (Units of BTC)",
+                      titlefont: { color: "red" },
+                      tickfont: { color: "red" },
+                      side: "left",
+                    },
+                    yaxis2: {
+                      title: "BTC USD",
+                      titlefont: { color: "#00ace6" },
+                      tickfont: { color: "#00ace6" },
+                      overlaying: "y",
+                      side: "right",
+                    },
+                  }}
+                />
+              )
+            )}
+          </Box>
         </Box>
-        </Box>
-      ))}
-      
+      )}
     </Box>
   );
 }

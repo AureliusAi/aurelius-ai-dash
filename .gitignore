@@ -42,3 +42,4 @@ settings.json
 models/database/
 models/train_package/
 models/saved_models/
+models/logs/

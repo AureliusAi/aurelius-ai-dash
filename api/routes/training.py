@@ -187,7 +187,8 @@ def train_one_shot():
   endstr: str = request.json["endtrainingdate"]
   coin_num_str: str = request.json["coinnum"]
   num_processes: int = int(request.json["numprocesses"])
-  deleteExistingRuns: bool = bool(request.json["numprocesses"])
+  deleteExistingRuns: bool = bool(request.json["deleteExistingRuns"])
+  fast_train: bool = request.json["fasttrain"] == 'True'
   device: str = request.json["device"]
   device = device.lower()
   numberepochs: str = request.json["numberepochs"]
@@ -261,6 +262,9 @@ def train_one_shot():
 
   if dataprovider != "":
     config["input"]["data_provider"] = dataprovider
+
+  if fast_train is not None:
+    config["training"]["fast_train"] = fast_train
 
   if nn != "":
     config["training"]["nn_agent_name"] = nn

@@ -93,6 +93,7 @@ class HistoryManager:
     self.__coins = coins
     for coin in coins:
       self.update_data(start, end, coin)
+    self.update_data(start, end, 'BTC')
     if len(coins) != self._coin_number:
       raise ValueError("the length of selected coins %d is not equal to expected %d" % (len(coins), self._coin_number))
 
@@ -219,6 +220,7 @@ class HistoryManager:
             "SELECT coin,SUM(volume) AS total_volume, max(date) FROM History WHERE"
             " date>=? and date<=? "
             " GROUP BY coin"
+            " WHERE coin not in BTC "
             " ORDER BY total_volume DESC "
             " LIMIT ?;",
             (int(start), int(end), self._coin_number),
