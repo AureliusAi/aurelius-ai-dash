@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
-import PageHeader, { H2Title } from "../../page-components/PageHeader";
+import { H2Title } from "../../page-components/PageHeader";
 import { API_MODELS_ENDPOINT } from "../../endpoints";
 import { AgGridReact } from "ag-grid-react";
 import { CellClickedEvent } from "ag-grid-community/dist/lib/events";
@@ -22,7 +22,7 @@ function Models() {
   const [bctYAxis, setBTCYAxcis] = useState<Array<number>>([]);
   const [timeAxis, setTimeAxis] = useState<Array<Date>>([]);
 
-  const refreshNNFromDB = () => {
+  const refreshModelsFromDB = () => {
     setDataRetError(null);
     setDataRetLoading(true);
     fetch(`${API_MODELS_ENDPOINT}/get-all`)
@@ -47,7 +47,7 @@ function Models() {
   };
 
   useEffect(() => {
-    refreshNNFromDB();
+    refreshModelsFromDB();
   }, []);
 
   const modelDataTableColDefs = [

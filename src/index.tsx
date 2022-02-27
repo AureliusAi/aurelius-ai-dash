@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DashboardWrapper from "./dashboard/DashboardWrapper";
 import "./index.css";
 import Backtest from "./pages/backtest/BacktestIndex";
-import Models from "./pages/models/ModlesIndex";
+import Models from "./pages/models/ModelsIndex";
 import Dashboard from "./pages/dashboard/DashboardIndex";
 import Data from "./pages/data/DataIndex";
 import OnlineMode from "./pages/online-mode";

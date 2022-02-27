@@ -1,4 +1,4 @@
-import DownloadIcon from "@mui/icons-material/Download";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import DateAdapter from "@mui/lab/AdapterDateFns";
 import DatePicker from "@mui/lab/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -13,13 +13,12 @@ import MenuItem from "@mui/material/MenuItem";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
-import TextareaAutosize from "@mui/material/TextareaAutosize";
 import TextField from "@mui/material/TextField";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import React, { ChangeEvent, useEffect, useLayoutEffect, useState } from "react";
 import { API_CONFIG_ENDPOINT, API_TRAINING_ENDPOINT } from "../../endpoints";
 import { disconnectLogSocket, initiateLogSocket, subscribeToLog } from "../../page-components/log_sockets";
-import PageHeader, { H2Title } from "../../page-components/PageHeader";
+import { H2Title } from "../../page-components/PageHeader";
+import { checkDateDiff, checkNumDaysBetweenYYYYMMDD } from "../../common/date_functions";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -85,12 +84,8 @@ export default function TrainOneShot() {
   }, []);
 
   useEffect(() => {
-    checkDateDiff();
+    setDateRangeError(checkDateDiff(get_training_start_date(), get_training_end_date()));
   }, [startTrainDate, endTrainDate]);
-
-  // useEffect(() => {
-  //   checkDateDiff();
-  // }, [nnNotSetError]);
 
   useEffect(() => {
     console.log("isTrainingRunning:" + isTrainingRunning);
@@ -156,29 +151,29 @@ export default function TrainOneShot() {
     return enddtstr;
   }
 
-  function checkDateDiff() {
-    /**
-     * Computes the number of months (with fraction) between start and end date
-     */
-    let startdtstr = get_training_start_date();
-    let enddtstr = get_training_end_date();
+  // function checkDateDiff() {
+  //   /**
+  //    * Computes the number of months (with fraction) between start and end date
+  //    */
+  //   let startdtstr = get_training_start_date();
+  //   let enddtstr = get_training_end_date();
 
-    let num_days_diff = checkNumDaysBetweenYYYYMMDD(enddtstr, startdtstr);
-    if (num_days_diff < 1.0) {
-      setDateRangeError("Must be at least 1 month between Start and End Training dates");
-    } else {
-      setDateRangeError(null);
-    }
-  }
+  //   let num_days_diff = checkNumDaysBetweenYYYYMMDD(enddtstr, startdtstr);
+  //   if (num_days_diff < 1.0) {
+  //     setDateRangeError("Must be at least 1 month between Start and End Training dates");
+  //   } else {
+  //     setDateRangeError(null);
+  //   }
+  // }
 
-  function checkNumDaysBetweenYYYYMMDD(enddtstr: string, startdtstr: string): number {
-    const enddt = new Date(Date.parse(enddtstr));
-    const startdt = new Date(Date.parse(startdtstr));
+  // function checkNumDaysBetweenYYYYMMDD(enddtstr: string, startdtstr: string): number {
+  //   const enddt = new Date(Date.parse(enddtstr));
+  //   const startdt = new Date(Date.parse(startdtstr));
 
-    let month_difference =
-      (enddt.getDate() - startdt.getDate()) / 30 + enddt.getMonth() - startdt.getMonth() + 12 * (enddt.getFullYear() - startdt.getFullYear());
-    return month_difference;
-  }
+  //   let month_difference =
+  //     (enddt.getDate() - startdt.getDate()) / 30 + enddt.getMonth() - startdt.getMonth() + 12 * (enddt.getFullYear() - startdt.getFullYear());
+  //   return month_difference;
+  // }
 
   const kick_off_training = (startdtstr: string, enddtstr: string) => {
     const trainOptions = {

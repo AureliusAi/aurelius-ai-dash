@@ -45,6 +45,35 @@ def get_avail_nn_names():
   return res
 
 
+@config_pages.get("/api/config/models/get-names-list")
+def get_avail_model_names():
+  """
+  Retrieves a list of only the names of Models from Training_Results table
+  """
+
+  model_list = []
+
+  db = SqliteDataDB()
+  qry = f"""
+    select distinct key from Training_Results
+    order by key desc
+  """
+  print(f'get all distinct Model instances: {qry}')
+  df, error_msg = db.qry_read_data(qry)
+  if df is None:
+    res = dict()
+    res['model_list'] = []
+    res['error_msg'] = error_msg
+    return res
+
+  model_list = df['key'].unique().tolist()
+
+  res = dict()
+  res['model_list'] = model_list
+
+  return res
+
+
 @config_pages.get("/api/config/nn/get-all")
 def get_all_nn_instances():
   db = SqliteDataDB()
