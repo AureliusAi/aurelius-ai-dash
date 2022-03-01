@@ -43,6 +43,15 @@ def downloadHistoricData(startdtstr: str,
   start = start_dt.replace(tzinfo=timezone.utc).timestamp()
   end = end_dt.replace(tzinfo=timezone.utc).timestamp()
 
+  start = int(start)
+  end = int(end)
+
+  start_of_test: int = round(int((end - start) / int(globalperiod)) * (1 - test_portion)) * int(globalperiod) + start
+  end_of_test: int = round(int((end - start) / int(globalperiod))) * int(globalperiod) + start
+
+  start_of_test_str = datetime.utcfromtimestamp(start_of_test).strftime('%Y-%m-%d %H:%M:%S')
+  end_of_test_str = datetime.utcfromtimestamp(end_of_test).strftime('%Y-%m-%d %H:%M:%S')
+
   DataMatrices(start=start,
                end=end,
                data_provider=data_provider,
@@ -55,3 +64,5 @@ def downloadHistoricData(startdtstr: str,
                is_permed=is_permed,
                test_portion=test_portion,
                portion_reversed=position_reversed)
+
+  return start_of_test_str, end_of_test_str

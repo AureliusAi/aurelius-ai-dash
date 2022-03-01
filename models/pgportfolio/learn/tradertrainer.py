@@ -327,6 +327,7 @@ class TraderTrainer:
     save_df["input_online"] = self.input_config["online"]
     save_df["input_start_date"] = self.input_config["start_date"]
     save_df["input_end_date"] = self.input_config["end_date"]
+    save_df["input_start_of_test_date"] = self.input_config["start_of_test_date"]
     save_df["input_volume_average_days"] = self.input_config["volume_average_days"]
     save_df["input_portion_reversed"] = self.input_config["portion_reversed"]
     save_df["input_data_provider"] = self.input_config["data_provider"]

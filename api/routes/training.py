@@ -279,16 +279,17 @@ def train_one_shot():
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
   logger.info("2. Download Historical Data")
   logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  utils.downloadHistoricData(startdtstr=startstr,
-                             enddtstr=endstr,
-                             data_provider=dataprovider,
-                             coinnum=int(coin_num_str),
-                             featurenum=int(numberfeatures),
-                             windowsize=int(windowsize),
-                             globalperiod=int(globalperiod),
-                             volume_avg_days=int(volumeaveragedays),
-                             test_portion=float(testportion),
-                             online=True)
+  start_of_test_str, end_of_test_str = utils.downloadHistoricData(startdtstr=startstr,
+                                                                  enddtstr=endstr,
+                                                                  data_provider=dataprovider,
+                                                                  coinnum=int(coin_num_str),
+                                                                  featurenum=int(numberfeatures),
+                                                                  windowsize=int(windowsize),
+                                                                  globalperiod=int(globalperiod),
+                                                                  volume_avg_days=int(volumeaveragedays),
+                                                                  test_portion=float(testportion),
+                                                                  online=True)
+  config["input"]["start_of_test_date"] = start_of_test_str
 
   # first delete existing training folders (if deleteExistingRuns=True), generate and then run training
   #training_logger.info("3. (training) Constructing train_package, tensorboard etc., folders")

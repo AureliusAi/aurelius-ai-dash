@@ -16,12 +16,36 @@ from common.db import SqliteDataDB
 model_pages = Blueprint("models", __name__)
 
 
+@model_pages.post("/api/models/delete-model-with-key")
+def delete_model_with_key():
+  """ deletes a trained model from the DB with a given key
+
+  Returns:
+      dict: return dictionary with error information
+  """
+
+  key: str = request.json['key']
+  db = SqliteDataDB()
+  qry = f"""
+    delete from Training_Results 
+    where `key` = '{key}'
+  """
+  print(f'deleting model with key: {qry}')
+  updated_rows, is_error, error_msg = db.update_or_delete_data(qry)
+
+  res = dict()
+  res['is_error'] = is_error
+  res['error_msg'] = error_msg
+  res['updated_rows'] = updated_rows
+  return res
+
+
 @model_pages.post("/api/models/update-key-label")
 def update_key_label():
   """given an existing key and a label, update the label of the key
 
   Returns:
-      dict: return dictionary with update_label_error set or not
+      dict: return dictionary with error informatio
   """
 
   key: str = request.json['key']
@@ -81,6 +105,7 @@ def get_all_nn_instances():
       backtest_test_log_mean,
       input_start_date,
       input_end_date,
+      input_start_of_test_date,
       input_coin_number,
       input_global_period,
       input_feature_number,

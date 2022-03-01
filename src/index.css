@@ -29,3 +29,11 @@ code {
   /* other formats include: 'woff2', 'truetype, 'opentype',
                             'embedded-opentype', and 'svg' */
 }
+
+.redFont {
+  color: red;
+}
+
+.bold {
+  font-weight: bold;
+}

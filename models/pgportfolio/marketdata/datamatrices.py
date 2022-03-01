@@ -58,6 +58,9 @@ class DataMatrices:
     self.__start = start
     self.__end = int(end)
 
+    logger.info('__start timestamp: {self.__start}')
+    logger.info('__end timestamp: {self.__end}')
+
     # assert window_size >= MIN_NUM_PERIOD
     self.__coin_no = coin_filter
     type_list = get_type_list(feature_number)

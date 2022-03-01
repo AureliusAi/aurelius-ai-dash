@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import { H2Title } from "../../page-components/PageHeader";
@@ -62,6 +62,7 @@ function Models() {
     { headerName: "BackTest Log Mean", field: "backtest_test_log_mean", width: 160 },
     { headerName: "Start Date", field: "input_start_date", width: 110 },
     { headerName: "End Date", field: "input_end_date", width: 110 },
+    { headerName: "Start of Test Date", field: "input_start_of_test_date", width: 150 },
     { headerName: "Coin #", field: "input_coin_number", width: 90 },
     { headerName: "# Epochs", field: "training_num_epochs", width: 110 },
     { headerName: "Test Portion", field: "input_test_portion", width: 120 },
@@ -151,14 +152,83 @@ function Models() {
       });
   };
 
+  const delete_trained_model_key_from_db = (key: string) => {
+    const plotOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: key }),
+    };
+
+    setPlotError(null);
+    setPlotLoading(true);
+    fetch(`${API_MODELS_ENDPOINT}/delete-model-with-key`, plotOptions)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          let is_error: boolean = Boolean(result["is_error"]);
+          if (is_error) {
+            setUpdateLabelError(result["error_msg"]);
+          } else {
+            refreshModelsFromDB();
+          }
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setPlotError(error);
+        }
+      )
+      .catch((error) => {
+        // handle the error
+      })
+      .finally(() => {
+        setPlotLoading(false);
+      });
+  };
+
   const onEditColumnCell = (event: CellEditingStoppedEvent) => {
-    var colname = event.colDef["field"];
+    let colname = event.colDef["field"];
     if (colname == "label") {
-      var editedkey: string = event.data["key"];
-      var editedval: string = event.newValue;
+      let editedkey: string = event.data["key"];
+      let editedval: string = event.newValue;
       update_label_for_key(editedkey, editedval);
     }
   };
+
+  const getContextMenuItems = useCallback((params) => {
+    let key_to_delete: string = params.node.data["key"];
+    let label_of_key_to_delete: string = params.node.data["label"];
+    if (label_of_key_to_delete == null) {
+      label_of_key_to_delete = "";
+    } else {
+      label_of_key_to_delete = " -- " + params.node.data["label"];
+    }
+    let result = [
+      {
+        // custom item
+        name: "Delete Trained Model: " + key_to_delete + label_of_key_to_delete,
+        tooltip: "Deletes the selected trained model from the system",
+        action: function () {
+          if (window.confirm("Are you sure you want to _delete_ (" + key_to_delete + ") this trained model from the database?")) {
+            alert("deleting " + key_to_delete + "!");
+            delete_trained_model_key_from_db(key_to_delete);
+          } else {
+            // Do nothing!
+          }
+        },
+        cssClasses: ["redFont", "bold"],
+      },
+      "separator",
+      "copy",
+      "copyWithHeaders",
+      "copyWithGroupHeaders",
+      "paste",
+      "separator",
+      "export",
+    ];
+    return result;
+  }, []);
 
   return (
     <Box sx={{ p: 0, m: 0 }}>
@@ -185,6 +255,7 @@ function Models() {
               columnTypes={columnTypes}
               onGridReady={onGridReady}
               onCellEditingStopped={onEditColumnCell}
+              getContextMenuItems={getContextMenuItems}
             ></AgGridReact>
           </div>
           <Box mt={2}>
