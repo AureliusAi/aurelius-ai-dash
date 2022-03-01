@@ -16,6 +16,33 @@ from common.db import SqliteDataDB
 model_pages = Blueprint("models", __name__)
 
 
+@model_pages.post("/api/models/update-key-label")
+def update_key_label():
+  """given an existing key and a label, update the label of the key
+
+  Returns:
+      dict: return dictionary with update_label_error set or not
+  """
+
+  key: str = request.json['key']
+  label: str = request.json['label']
+
+  db = SqliteDataDB()
+  qry = f"""
+    update Training_Results 
+    set label = '{label}'
+    where `key` = '{key}'
+  """
+  print(f'updating model label: {qry}')
+  updated_rows, is_error, error_msg = db.update_or_delete_data(qry)
+
+  res = dict()
+  res['is_error'] = is_error
+  res['error_msg'] = error_msg
+  res['updated_rows'] = updated_rows
+  return res
+
+
 @model_pages.post("/api/models/plot-results")
 def plot_trained_model():
   """
@@ -46,6 +73,7 @@ def get_all_nn_instances():
   qry = f"""
     select 
       `key`, 
+      label,
       test_pv,
       test_log_mean,
       test_log_mean_free,

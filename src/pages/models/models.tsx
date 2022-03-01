@@ -4,7 +4,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { H2Title } from "../../page-components/PageHeader";
 import { API_MODELS_ENDPOINT } from "../../endpoints";
 import { AgGridReact } from "ag-grid-react";
-import { CellClickedEvent } from "ag-grid-community/dist/lib/events";
+import { CellClickedEvent, CellEditingStoppedEvent } from "ag-grid-community/dist/lib/events";
 import Plot from "react-plotly.js";
 
 function Models() {
@@ -21,6 +21,8 @@ function Models() {
   const [yAxis, setYAxis] = useState<Array<number>>([]);
   const [bctYAxis, setBTCYAxcis] = useState<Array<number>>([]);
   const [timeAxis, setTimeAxis] = useState<Array<Date>>([]);
+
+  const [updateLabelError, setUpdateLabelError] = useState<string | null>();
 
   const refreshModelsFromDB = () => {
     setDataRetError(null);
@@ -52,6 +54,7 @@ function Models() {
 
   const modelDataTableColDefs = [
     { headerName: "Key", field: "key", width: 150, type: "nonEditableColumn" },
+    { headerName: "Label", field: "label", width: 120, editable: true, cellStyle: { color: "blue", backgroundColor: "#FFFFAA" } },
     { headerName: "Test PV", field: "test_pv", width: 120 },
     { headerName: "Test Log Mean", field: "test_log_mean", width: 130 },
     { headerName: "Test Log Mean Free", field: "test_log_mean_free", width: 160 },
@@ -84,9 +87,6 @@ function Models() {
 
   const modelRowDoubleClicked = (event: CellClickedEvent) => {
     const selected_key = event.data["key"];
-    console.log("Cell was clicked." + event.data["key"]);
-    // get table/plot
-    // /api/config/models/plot
     const plotOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -121,9 +121,49 @@ function Models() {
       });
   };
 
+  const update_label_for_key = (key: string, label: string) => {
+    const plotOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: key, label: label }),
+    };
+
+    setPlotError(null);
+    setPlotLoading(true);
+    fetch(`${API_MODELS_ENDPOINT}/update-key-label`, plotOptions)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          setUpdateLabelError(result["error_msg"]);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setPlotError(error);
+        }
+      )
+      .catch((error) => {
+        // handle the error
+      })
+      .finally(() => {
+        setPlotLoading(false);
+      });
+  };
+
+  const onEditColumnCell = (event: CellEditingStoppedEvent) => {
+    var colname = event.colDef["field"];
+    if (colname == "label") {
+      var editedkey: string = event.data["key"];
+      var editedval: string = event.newValue;
+      update_label_for_key(editedkey, editedval);
+    }
+  };
+
   return (
     <Box sx={{ p: 0, m: 0 }}>
       <H2Title>Trained Models</H2Title>
+      {updateLabelError && <Box sx={{ color: "#FF3333" }}>Error updating labe: {updateLabelError}</Box>}
       {dataRetLoading ? (
         <LinearProgress />
       ) : dataRetError ? (
@@ -140,9 +180,11 @@ function Models() {
                 filter: true,
                 floatingFilter: true,
               }}
+              stopEditingWhenCellsLoseFocus={true}
               onRowDoubleClicked={modelRowDoubleClicked}
               columnTypes={columnTypes}
               onGridReady={onGridReady}
+              onCellEditingStopped={onEditColumnCell}
             ></AgGridReact>
           </div>
           <Box mt={2}>

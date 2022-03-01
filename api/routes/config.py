@@ -55,8 +55,13 @@ def get_avail_model_names():
 
   db = SqliteDataDB()
   qry = f"""
-    select distinct key from Training_Results
-    order by key desc
+    select 
+      CASE WHEN label IS NOT NULL THEN
+          key || ' -- ' || label 
+        ELSE key 
+        END as key 
+      FROM Training_Results
+    ORDER BY key desc
   """
   print(f'get all distinct Model instances: {qry}')
   df, error_msg = db.qry_read_data(qry)

@@ -197,7 +197,7 @@ export default function Backtest() {
             </LocalizationProvider>
           </Box>
           <Box ml={2}>
-            <FormControl sx={{ width: 235 }}>
+            <FormControl sx={{ width: 300 }}>
               <InputLabel id="demo-multiple-checkbox-label">Select Model</InputLabel>
               <Select
                 labelId="demo-multiple-checkbox-label"
@@ -217,9 +217,6 @@ export default function Backtest() {
               </Select>
             </FormControl>
           </Box>
-        </Box>
-
-        <Box mt={2} mb={2} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
           <Box ml={2}>
             {modelNotSetError && <Box sx={{ color: "#FF3333" }}>{modelNotSetError}</Box>}
             {dateRangeError && <Box sx={{ color: "#FF3333" }}>{dateRangeError}</Box>}
@@ -227,7 +224,7 @@ export default function Backtest() {
               <Box>
                 <Box sx={{ alignItems: "center" }} display="flex">
                   <LoadingButton loading={isBacktestRunning} onClick={onRunBacktest} variant="contained">
-                    Train One Shot
+                    Run Back Test
                   </LoadingButton>
 
                   {backtestError ? (
@@ -250,53 +247,7 @@ export default function Backtest() {
           </Box>
         </Box>
         <Box ml={2}>{backtestStatusMsg ? backtestStatusMsg : <span />}</Box>
-        <Box mt={0} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}>
-          {/* <FormControl sx={{ minWidth: 110, marginLeft: 2 }}>
-            <InputLabel id="global-period-select-label">Global Period</InputLabel>
-            <Select
-              value={globalPeriod}
-              id="global-period-select-label"
-              onChange={handleProcessNumberChange}
-              displayEmpty
-              autoWidth
-              label="Global Period"
-              inputProps={{ "aria-label": "The period on which to train the model" }}
-            >
-              <MenuItem value="60">1 min</MenuItem>
-              <MenuItem value="300">5 mins</MenuItem>
-              <MenuItem value="600">10 mins</MenuItem>
-              <MenuItem value="900">15 mins</MenuItem>
-              <MenuItem value="1800">30 mins</MenuItem>
-              <MenuItem value="3600">1 hour</MenuItem>
-              <MenuItem value="14400">4 hours</MenuItem>
-              <MenuItem value="86400">1 day</MenuItem>
-            </Select>
-          </FormControl> */}
-        </Box>
-      </Box>
-      <Box>
-        <Box mt={5}>
-          <Plot
-            data={[
-              {
-                x: [1, 2, 3],
-                y: [2, 6, 3],
-                type: "scatter",
-                mode: "lines+markers",
-                marker: { color: "red" },
-              },
-              { type: "bar", x: [1, 2, 3], y: [2, 5, 3] },
-            ]}
-            layout={{ width: 320, height: 240, title: "A Fancy Plot" }}
-          />
-        </Box>
-        <div className="ag-theme-balham" style={{ height: 400, width: 600 }}>
-          <AgGridReact reactUi={true} rowData={rowData}>
-            <AgGridColumn field="make"></AgGridColumn>
-            <AgGridColumn field="model"></AgGridColumn>
-            <AgGridColumn field="price"></AgGridColumn>
-          </AgGridReact>
-        </div>
+        <Box mt={0} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}></Box>
       </Box>
     </Box>
   );
