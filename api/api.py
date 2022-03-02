@@ -13,6 +13,7 @@ from routes.config import config_pages
 from routes.data import data_pages
 from routes.training import training_pages
 from routes.models import model_pages
+from routes.backtesting import backtesting_pages
 
 from common.custom_logger2 import get_custom_logger, get_custom_training_logger
 from common.custom_logger2 import global_training_queue
@@ -42,6 +43,7 @@ app.register_blueprint(data_pages)
 app.register_blueprint(training_pages)
 app.register_blueprint(config_pages)
 app.register_blueprint(model_pages)
+app.register_blueprint(backtesting_pages)
 
 # socket_ = SocketIO(app, async_mode=None)
 # |cors_allowed_origins| is required for localhost testing.

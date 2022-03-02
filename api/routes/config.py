@@ -1,10 +1,10 @@
 import json
-from flask import Blueprint, request, jsonify, make_response, url_for, redirect
-from datetime import datetime
-import dateutil.parser
 import time
+from datetime import datetime
 
-from common.db import SqliteDataDB
+import dateutil.parser
+from common.db import MariaDB
+from flask import Blueprint, jsonify, make_response, redirect, request, url_for
 
 config_pages = Blueprint("config", __name__)
 
@@ -17,7 +17,7 @@ def get_avail_nn_names():
 
   nn_list = []
 
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select `Name` as instance_name, `Version` as version, UpdateDate
     from Config_NN main
@@ -30,11 +30,11 @@ def get_avail_nn_names():
     Order by `Name`
   """
   print(f'get all NN instances: {qry}')
-  df, error_msg = db.qry_read_data(qry)
+  df, = db.qry_read_data(qry)
   if df is None:
     res = dict()
     res['nn_list'] = []
-    res['error_msg'] = error_msg
+    res['error_msg'] = 'No NN found in the DB'
     return res
 
   nn_list = df['instance_name'].unique().tolist()
@@ -53,7 +53,7 @@ def get_avail_model_names():
 
   model_list = []
 
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select 
       CASE WHEN label IS NOT NULL THEN
@@ -64,11 +64,11 @@ def get_avail_model_names():
     ORDER BY key desc
   """
   print(f'get all distinct Model instances: {qry}')
-  df, error_msg = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
   if df is None:
     res = dict()
     res['model_list'] = []
-    res['error_msg'] = error_msg
+    res['error_msg'] = 'No Model Labels found in the DB'
     return res
 
   model_list = df['key'].unique().tolist()
@@ -81,7 +81,7 @@ def get_avail_model_names():
 
 @config_pages.get("/api/config/nn/get-all")
 def get_all_nn_instances():
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select `Name` as instance_name, `Version` as version, `CreateUser` as created_by, 
     `Definition` as nn_definition, `CreateDate` as creation_date, `UpdateDate` as updatedAt from Config_NN main
@@ -93,11 +93,11 @@ def get_all_nn_instances():
     Order by `UpdateDate` desc
   """
   print(f'get all NN instances: {qry}')
-  df, error_msg = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
   if df is None:
     res = dict()
     res['nn_instances'] = []
-    res['error_msg'] = error_msg
+    res['error_msg'] = ''
     return res
 
   res = dict()
@@ -114,7 +114,7 @@ def update_nn_instance():
 
   # first get the latest version and user
   # note because we are creating a new entry in the DB, we need to get the Create Date because we want to keep the orginal
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select `Name` as instance_name, `Version` as version, `CreateUser` as created_by, `CreateDate` as created_date
     from Config_NN main
@@ -126,23 +126,23 @@ def update_nn_instance():
     Order by `UpdateDate` desc
     LIMIT 1
   """
-  df_existing, error_msg = db.qry_read_data(qry)
+  df_existing = db.qry_read_data(qry)
   if df_existing is None:
     res = dict()
     res['is_error'] = True
-    res['error_msg'] = error_msg
+    res['error_msg'] = ''
     return res
 
   next_ver: int = int(df_existing['version'].values[0]) + 1
   created_user: str = df_existing['created_by'].values[0]
   created_date: str = df_existing['created_date'].values[0]
 
-  db = SqliteDataDB()
+  db = MariaDB()
   input_list = []
   input_list.append((inst_name, next_ver, inst_definition, created_date, created_user))
   is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Version, Definition, CreateDate, CreateUser) VALUES (?, ?, ?, ?, ?)", input_list)
 
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select `Name` as instance_name, `Version`, `CreateDate`, `UpdateDate` 
     from Config_NN main
@@ -151,11 +151,11 @@ def update_nn_instance():
   """
   create_date: str = ""
   update_date: str = ""
-  df_existing, error_msg = db.qry_read_data(qry)
+  df_existing = db.qry_read_data(qry)
   if df_existing is None:
     res = dict()
     res['is_error'] = True
-    res['error_msg'] = error_msg
+    res['error_msg'] = f"No NN data exists where `Name` = '{inst_name}' and `Version` = '{next_ver}' "
     return res
   else:
     create_date = df_existing['CreateDate'].values[0]
@@ -180,7 +180,7 @@ def delete_nn_instance():
   inst_name: str = request.json['instance_to_delete']
   inst_version: str = request.json['instance_version_to_delete']
 
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     update from Config_NN 
     set IsDeleted = 1
@@ -213,7 +213,7 @@ def save_new_neural_network():
   print(type(inst_definition))
   print(f'user: {user}')
 
-  db = SqliteDataDB()
+  db = MariaDB()
   input_list = []
   input_list.append((inst_name, inst_definition, user))
   is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Definition, CreateUser) VALUES (?,?,?)", input_list)

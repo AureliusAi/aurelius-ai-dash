@@ -11,7 +11,7 @@ from models.pgportfolio.resultprocess.plot import plot_backtest_using_trained_mo
 logger = get_custom_logger(__name__)
 training_logger = get_custom_training_logger(__name__)
 
-from common.db import SqliteDataDB
+from common.db import MariaDB
 
 model_pages = Blueprint("models", __name__)
 
@@ -25,7 +25,7 @@ def delete_model_with_key():
   """
 
   key: str = request.json['key']
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     delete from Training_Results 
     where `key` = '{key}'
@@ -51,7 +51,7 @@ def update_key_label():
   key: str = request.json['key']
   label: str = request.json['label']
 
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     update Training_Results 
     set label = '{label}'
@@ -93,7 +93,7 @@ def plot_trained_model():
 
 @model_pages.get("/api/models/get-all")
 def get_all_nn_instances():
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select 
       `key`, 
@@ -123,11 +123,11 @@ def get_all_nn_instances():
     Order by `key` desc
   """
   print(f'get all Model instances: {qry}')
-  df, error_msg = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
   if df is None:
     res = dict()
     res['models'] = []
-    res['error_msg'] = error_msg
+    res['error_msg'] = 'No Trained Models found in the DB'
     return res
 
   res = dict()

@@ -7,7 +7,7 @@ import pandas as pd
 import json
 import numpy as np
 import datetime
-from common.db import SqliteDataDB
+from common.db import MariaDB
 from models.pgportfolio.tools.indicator import max_drawdown, sharpe, positive_count, negative_count, moving_accumulate
 from models.pgportfolio.tools.configprocess import parse_time, check_input_same
 from models.pgportfolio.tools.shortcut import execute_backtest
@@ -131,13 +131,13 @@ def get_btc_px_for_dates(dates: list):
   """
 
   btc_px_qry = """
-    select date, 1/open as BTCUSD from History
+    select date, 1/open as BTCUSD from Mkt_History_Px
     where coin = 'reversed_USDT'
     order by date
   """
 
-  db = SqliteDataDB()
-  df, error_msg = db.qry_read_data(btc_px_qry)
+  db = MariaDB()
+  df = db.qry_read_data(btc_px_qry)
   df2 = df[df['date'].isin(dates)]
   return list(df2['BTCUSD'])
 
@@ -271,7 +271,7 @@ def load_from_saved_instance(key):
     @:return: numpy array of the portfolio changes
     """
 
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select 
       `key`, 
@@ -281,7 +281,7 @@ def load_from_saved_instance(key):
     Where `key` = '{key}'
   """
   print(qry)
-  df, error_msg = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
 
   history_string = df.loc[df['key'] == key, "backtest_test_history"].values[0]
   config = df.loc[df['key'] == key, "config"].values[0]

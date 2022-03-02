@@ -14,7 +14,7 @@ import pytz
 
 tz = pytz.timezone("Asia/Tokyo")
 
-from common.db import SqliteDataDB
+from common.db import MariaDB
 from common.custom_logger2 import get_custom_logger, get_custom_training_logger
 
 logger = get_custom_logger(__name__)
@@ -201,7 +201,7 @@ def train_one_shot():
   nn: str = request.json["nn"]
 
   # 1st: insert the definition of the Neural network config
-  db = SqliteDataDB()
+  db = MariaDB()
   qry = f"""
     select `Definition` 
     from Config_NN main
@@ -213,9 +213,9 @@ def train_one_shot():
     and `Name` = '{nn}'
     Order by `UpdateDate` desc
   """
-  df, error_msg = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
   if df is None:
-    return {"status_msg": error_msg, "status_code": -1}
+    return {"status_msg": "No NN Definitions found", "status_code": -1}
 
   layers_s = df["Definition"].values[0]
 

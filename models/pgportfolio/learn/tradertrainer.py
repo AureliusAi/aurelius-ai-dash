@@ -20,7 +20,7 @@ tz = pytz.timezone("Asia/Tokyo")
 # import tflearn
 import numpy as np
 import pandas as pd
-from common.db import SqliteDataDB
+from common.db import MariaDB
 import tensorflow.compat.v1 as tf
 from models.pgportfolio.learn.nnagent import NNAgent
 from models.pgportfolio.marketdata.datamatrices import DataMatrices
@@ -348,5 +348,5 @@ class TraderTrainer:
     save_df["training_decay_rate"] = self.train_config["decay_rate"]
     save_df["training_decay_steps"] = self.train_config["decay_steps"]
 
-    db = SqliteDataDB()
+    db = MariaDB()
     db.insert_data_frame(save_df, 'Training_Results', if_exists='append')

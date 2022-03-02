@@ -8,7 +8,7 @@ from common.custom_logger2 import global_training_queue
 logger = get_custom_logger(__name__)
 training_logger = get_custom_training_logger(__name__)
 
-from common.db import SqliteDataDB
+from common.db import MariaDB
 
 data_pages = Blueprint("data", __name__)
 
@@ -16,17 +16,19 @@ data_pages = Blueprint("data", __name__)
 @data_pages.get("/api/data/get-min-max-data-dates")
 def get_min_max_data_dates():
 
-  db = SqliteDataDB()
-  df, err_msg = db.qry_read_data("select max(DATETIME(ROUND(date), 'unixepoch')) as maxdate, min(DATETIME(ROUND(date), 'unixepoch')) AS mindate from History")
+  db = MariaDB()
+  df = db.qry_read_data(
+      "select max(FROM_UNIXTIME(date, '%%Y-%%m-%%d %%H:%%i:%%S')) as maxdate, min(FROM_UNIXTIME(date, '%%Y-%%m-%%d %%H:%%i:%%S')) AS mindate from Mkt_History_Px"
+  )
   res = dict()
   if df is not None:
     res['min_date'] = df['mindate'].values[0]
     res['max_date'] = df['maxdate'].values[0]
-    res['error_msg'] = err_msg
+    res['error_msg'] = 'No Data found in Mkt_History_Px Table'
   else:
     res['min_date'] = ""
     res['max_date'] = ""
-    res['error_msg'] = err_msg
+    res['error_msg'] = ''
 
   return res
 
@@ -45,8 +47,8 @@ def get_avail_coins():
   error_msg = ""
 
   if isall:
-    db = SqliteDataDB()
-    df, error_msg = db.qry_read_data("select DISTINCT coin from History")
+    db = MariaDB()
+    df = db.qry_read_data("select DISTINCT coin from Mkt_History_Px")
     if df is not None:
       coin_list = df['coin'].unique().tolist()
   else:
@@ -54,7 +56,7 @@ def get_avail_coins():
 
   res = dict()
   res['coin_list'] = coin_list
-  res['error_msg'] = error_msg
+  res['error_msg'] = ''
 
   return res
 
@@ -73,7 +75,7 @@ def get_hist_data():
   else:
     coinlist = []
 
-  db = SqliteDataDB()
+  db = MariaDB()
 
   where_date_clause = ''
   if startdate != '':
@@ -92,8 +94,8 @@ def get_hist_data():
     coins_as_str = "'{}'".format("','".join(coinlist))
     where_coin_clause = f' and coin in ({coins_as_str})'
 
-  qry = f"""
-    select `date`, DATETIME(ROUND(date), 'unixepoch') AS isodate, coin, high, low, open, close, volume, quoteVolume, weightedAverage from History
+  qry = f"""       
+    select `date`, FROM_UNIXTIME(date, '%%Y-%%m-%%d %%H:%%i:%%S') AS isodate, coin, high, low, open, close, volume, quoteVolume, weightedAverage from Mkt_History_Px
     WHERE coin != ''
     {where_coin_clause}
     {where_date_clause}
@@ -101,14 +103,14 @@ def get_hist_data():
     limit 10000
   """
   logger.info(f'get_hist_data: {qry}')
-  df, error_msg = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
 
   res = dict()
   if df is not None:
     res['hist_data'] = df.to_json(orient="records")
   else:
     res['hist_data'] = []
-  res['error_msg'] = error_msg
+  res['error_msg'] = 'No Data found in Mkt_History_Px for specified coin / date'
   return res
 
 

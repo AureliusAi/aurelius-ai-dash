@@ -134,26 +134,26 @@ class HistoryManager:
         for feature in features:
           # NOTE: transform the start date to end date
           if feature == "close":
-            sql = ("SELECT date+300 AS date_norm, close FROM History WHERE"
+            sql = ("SELECT date+300 AS date_norm, close FROM Mkt_History_Px WHERE"
                    " date_norm>={start} and date_norm<={end}"
                    ' and date_norm%{period}=0 and coin="{coin}"'.format(start=start, end=end, period=period, coin=coin))
           elif feature == "open":
-            sql = ("SELECT date+{period} AS date_norm, open FROM History WHERE"
+            sql = ("SELECT date+{period} AS date_norm, open FROM Mkt_History_Px WHERE"
                    " date_norm>={start} and date_norm<={end}"
                    ' and date_norm%{period}=0 and coin="{coin}"'.format(start=start, end=end, period=period, coin=coin))
           elif feature == "volume":
             sql = ("SELECT date_norm, SUM(volume) as volume" + " FROM (SELECT date+{period}-(date%{period}) "
-                   "AS date_norm, volume, coin FROM History)"
+                   "AS date_norm, volume, coin FROM HisMkt_History_Pxtory)"
                    ' WHERE date_norm>={start} and date_norm<={end} and coin="{coin}"'
                    " GROUP BY date_norm".format(period=period, start=start, end=end, coin=coin))
           elif feature == "high":
             sql = ("SELECT date_norm, MAX(high) as high" + " FROM (SELECT date+{period}-(date%{period})"
-                   " AS date_norm, high, coin FROM History)"
+                   " AS date_norm, high, coin FROM Mkt_History_Px)"
                    ' WHERE date_norm>={start} and date_norm<={end} and coin="{coin}"'
                    " GROUP BY date_norm".format(period=period, start=start, end=end, coin=coin))
           elif feature == "low":
             sql = ("SELECT date_norm, MIN(low) as low" + " FROM (SELECT date+{period}-(date%{period})"
-                   " AS date_norm, low, coin FROM History)"
+                   " AS date_norm, low, coin FROM Mkt_History_Px)"
                    ' WHERE date_norm>={start} and date_norm<={end} and coin="{coin}"'
                    " GROUP BY date_norm".format(period=period, start=start, end=end, coin=coin))
           else:
@@ -215,14 +215,15 @@ class HistoryManager:
       connection = sqlite3.connect(DATABASE_DIR)
       try:
         cursor = connection.cursor()
-        cursor.execute(
-            "SELECT coin,SUM(volume) AS total_volume, max(date) FROM History WHERE"
-            " date>=? and date<=? "
-            " GROUP BY coin"
-            " ORDER BY total_volume DESC "
-            " LIMIT ?;",
-            (int(start), int(end), self._coin_number),
-        )
+        select_coin_qry = f"""
+            SELECT coin,SUM(volume) AS total_volume, max(date) FROM Mkt_History_Px WHERE
+             date>={int(start)} and date<={int(end)} 
+             GROUP BY coin
+             ORDER BY total_volume DESC 
+             LIMIT {self._coin_number};
+        """
+        print(select_coin_qry)
+        cursor.execute(select_coin_qry)
         coins_tuples = cursor.fetchall()
 
         if len(coins_tuples) != self._coin_number:
@@ -278,8 +279,8 @@ class HistoryManager:
     logger.info("update_data: processing coin: " + coin)
     try:
       cursor = connection.cursor()
-      min_date = cursor.execute("SELECT MIN(date) FROM History WHERE coin=?;", (coin,)).fetchall()[0][0]
-      max_date = cursor.execute("SELECT MAX(date) FROM History WHERE coin=?;", (coin,)).fetchall()[0][0]
+      min_date = cursor.execute("SELECT MIN(date) FROM Mkt_History_Px WHERE coin=?;", (coin,)).fetchall()[0][0]
+      max_date = cursor.execute("SELECT MAX(date) FROM Mkt_History_Px WHERE coin=?;", (coin,)).fetchall()[0][0]
 
       if min_date == None or max_date == None:
         self.__fill_data(start, end, coin, cursor)

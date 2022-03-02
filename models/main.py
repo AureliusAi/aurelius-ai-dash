@@ -104,7 +104,7 @@ def main():
 
   elif options.mode == "save_test_data":
     # This is used to export the test data
-    save_testage_data(load_config(options.folder))
+    save_test_data(load_config(options.folder))
 
   elif options.mode == "plot":
     logging.basicConfig(level=logging.INFO)

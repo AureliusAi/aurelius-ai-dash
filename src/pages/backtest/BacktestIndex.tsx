@@ -1,25 +1,20 @@
-import DownloadIcon from "@mui/icons-material/Download";
 import DateAdapter from "@mui/lab/AdapterDateFns";
 import DatePicker from "@mui/lab/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
-import { AgGridReact, AgGridColumn } from "ag-grid-react";
 import { InputLabel } from "@mui/material";
 import Box from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
-import Plot from "react-plotly.js";
-import { ChangeEvent, useEffect, useLayoutEffect, useState } from "react";
-import { API_CONFIG_ENDPOINT, API_MODELS_ENDPOINT, API_TRAINING_ENDPOINT } from "../../endpoints";
-import PageHeader, { H2Title } from "../../page-components/PageHeader";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { checkDateDiff, checkNumDaysBetweenYYYYMMDD } from "../../common/date_functions";
-import Models from "../models/models";
+import { API_BACKTESTING_ENDPOINT, API_CONFIG_ENDPOINT } from "../../endpoints";
+import PageHeader from "../../page-components/PageHeader";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -35,12 +30,8 @@ const MenuProps = {
 export default function Backtest() {
   const [startTrainDate, setStartTrainDate] = useState<Date | null>(new Date());
   const [endTrainDate, setEndTrainDate] = useState<Date | null>(new Date());
-  const [coinNumber, setCoinNumber] = useState<number>(11);
-  const [device, setDevice] = useState<string>("CPU");
-  const [globalPeriod, setGlobalPeriod] = useState<string>("1800");
-  const [windowSize, setWindowSize] = useState<number>(50);
   const [availModels, setAvailModels] = useState<string[] | null>(null);
-  const [modelData, setModelData] = useState(null);
+  const [algoList, setAlgoList] = useState<string[] | null>(null);
   const [dateRangeError, setDateRangeError] = useState<string | null>(null);
   const [modelNotSetError, setModelNotSetError] = useState<string | null>(null);
   const [modelToUse, setModelToUse] = useState<string>("");
@@ -51,19 +42,16 @@ export default function Backtest() {
 
   const [dataRetError, setDataRetError] = useState(null);
   const [dataRetLoading, setDataRetLoading] = useState(false);
+
+  const [backTestAlgosRetError, setBackTestAlgosRetError] = useState<boolean>(false);
+  const [backTestAlgosLoading, setBackTestAlgosLoading] = useState<boolean>(false);
   const [backtestStatusMsg, setBacktestStatusMsg] = useState<string | null>(null);
 
   const theme = useTheme();
 
-  const rowData = [
-    { make: "Toyota", model: "Celica", price: 35000 },
-    { make: "Ford", model: "Mondeo", price: 32000 },
-    { make: "Porsche", model: "Boxter", price: 72000 },
-  ];
-
   useLayoutEffect(() => {
     const PAST_DATE = new Date();
-    PAST_DATE.setMonth(PAST_DATE.getMonth() - 12);
+    PAST_DATE.setMonth(PAST_DATE.getMonth() - 1);
     setStartTrainDate(PAST_DATE);
   }, []);
 
@@ -73,6 +61,7 @@ export default function Backtest() {
 
   useEffect(() => {
     get_list_of_avail_models();
+    get_list_of_backtest_algos();
   }, []);
 
   function get_training_start_date() {
@@ -90,6 +79,27 @@ export default function Backtest() {
     }
     return enddtstr;
   }
+
+  const get_list_of_backtest_algos = () => {
+    setBackTestAlgosRetError(false);
+    setBackTestAlgosLoading(true);
+    fetch(`${API_BACKTESTING_ENDPOINT}/get-benchmark-algos`)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          setAlgoList(result["algo_list"]);
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setBackTestAlgosRetError(error);
+        }
+      )
+      .finally(() => {
+        setBackTestAlgosLoading(false);
+      });
+  };
 
   const get_list_of_avail_models = () => {
     setDataRetError(null);
@@ -126,6 +136,40 @@ export default function Backtest() {
     }
   };
 
+  const kick_off_backtest = (startdtstr: string, enddtstr: string, modelToUse: string) => {
+    const plotOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ startdtstr: startdtstr, enddtstr: enddtstr, modeltouse: modelToUse }),
+    };
+    setBacktestRunning(true);
+    setBacktestError(null);
+    fetch(`${API_BACKTESTING_ENDPOINT}/run-backtest-for-date-range-with-model`, plotOptions)
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          let is_error: boolean = Boolean(result["is_error"]);
+          if (is_error) {
+            setBacktestError(result["error_msg"]);
+          } else {
+            setBacktestError(null);
+          }
+        },
+        // Note: it's important to handle errors here
+        // instead of a catch() block so that we don't swallow
+        // exceptions from actual bugs in components.
+        (error) => {
+          setBacktestError(error);
+        }
+      )
+      .catch((error) => {
+        // handle the error
+      })
+      .finally(() => {
+        setBacktestRunning(false);
+      });
+  };
+
   function onRunBacktest(event: React.MouseEvent) {
     setBacktestStatusMsg(null);
 
@@ -147,7 +191,7 @@ export default function Backtest() {
     }
 
     setBacktestStatusMsg("kicking off backtesting");
-    // kick_off_backtest(startdtstr, enddtstr);
+    kick_off_backtest(startdtstr, enddtstr, modelToUse);
   }
 
   return (
@@ -241,12 +285,27 @@ export default function Backtest() {
                   ) : (
                     <span />
                   )}
+
+                  {backtestStatusMsg ? (
+                    <Box sx={{ color: "#35a660" }} ml={2}>
+                      {backtestStatusMsg}
+                    </Box>
+                  ) : (
+                    <span />
+                  )}
                 </Box>
               </Box>
             )}
           </Box>
         </Box>
-        <Box ml={2}>{backtestStatusMsg ? backtestStatusMsg : <span />}</Box>
+        <Box mt={2}>
+          {algoList && (
+            <Box>
+              <span style={{ color: "#AAAAAA" }}>Available Backtest Algos</span> [{algoList.join(", ")}]
+            </Box>
+          )}
+        </Box>
+
         <Box mt={0} display="Flex" sx={{ alignContent: "center", alignItems: "center" }}></Box>
       </Box>
     </Box>

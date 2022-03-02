@@ -1,4 +1,5 @@
 from __future__ import division, absolute_import, print_function
+import os
 from models.pgportfolio.trade.backtest import BackTest
 from models.pgportfolio.tdagent.algorithms import crp, ons, olmar, up, anticor1, pamr, best, bk, cwmr_std, eg, sp, ubah, wmamr, bcrp, cornk, m0, rmr
 
@@ -24,28 +25,37 @@ ALGOS = {
 }
 
 
-def execute_backtest(algo, config):
+def execute_backtest(algo: str, config: dict, is_traditional: bool):
   """
     @:param algo: string representing the name the name of algorithms
     @:return: numpy array of portfolio changes
     """
-  agent, agent_type, net_dir = _construct_agent(algo)
+  agent, agent_type, net_dir, error_msg = _construct_agent(algo, is_traditional)
+  if agent is None:
+    return None, error_msg
+
   backtester = BackTest(config, agent=agent, agent_type=agent_type, net_dir=net_dir)
   backtester.start_trading()
-  return backtester.test_pc_vector
+  return backtester.test_pc_vector, ''
 
 
-def _construct_agent(algo):
-  if algo.isdigit():
+def _construct_agent(algo: str, is_traditional: bool):
+
+  error_msg: str = ''
+
+  if is_traditional:
+    if algo in ALGOS:
+      agent = ALGOS[algo]()
+      agent_type = "traditional"
+      net_dir = None
+    else:
+      error_msg = "The algorithm name "+algo+" is not support. Supported algos " \
+                                         "are " + str(list(ALGOS.keys()))
+      return None, None, None, error_msg
+
+  else:  # using trained algo
     agent = None
     agent_type = "nn"
-    net_dir = "./train_package/" + algo + "/netfile"
-  elif algo in ALGOS:
-    agent = ALGOS[algo]()
-    agent_type = "traditional"
-    net_dir = None
-  else:
-    message = "The algorithm name "+algo+" is not support. Supported algos " \
-                                         "are " + str(list(ALGOS.keys()))
-    raise LookupError(message)
-  return agent, agent_type, net_dir
+    net_dir = str(os.path.join('models', 'saved_models', algo, '/netfile'))
+
+  return agent, agent_type, net_dir, error_msg

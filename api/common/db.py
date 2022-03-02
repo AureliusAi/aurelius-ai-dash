@@ -1,9 +1,56 @@
 import sqlite3
 import sqlalchemy
+from sqlalchemy.exc import SQLAlchemyError
+import pymysql
 import pandas as pd
 from typing import Tuple
 import pandas as pd
 import os
+
+
+class MariaDB:
+
+  username: str = 'aurelius'
+  dbpw: str = 'Wtshnn123#'
+
+  def qry_read_data(self, qry: str, database: str = 'AureliusAi') -> pd.DataFrame:
+    db_connection_str = f'mysql+pymysql://{self.username}:{self.dbpw}@localhost/{database}'
+    engine = sqlalchemy.create_engine(db_connection_str)
+    df = pd.read_sql(qry, con=engine)
+    engine.dispose()
+    return df
+
+  def update_or_delete_data(self, sql: str, database: str = 'AureliusAi'):
+    connection = connection = pymysql.connect(host='localhost', user=self.username, password=self.database, db=database, cursorclass=pymysql.cursors.DictCursor)
+    updated_rows: int = 0
+    isError: bool = False
+    errorTxt: str = ''
+    try:
+      cursor = connection.cursor()
+      updated_rows = cursor.execute(sql)
+      connection.commit()
+    except pymysql.Error as e:
+      isError = True
+      errorTxt = str(e)
+      cursor.close()
+
+    finally:
+      # Close connection.
+      connection.close()
+
+      return updated_rows, isError, errorTxt
+
+  def insert_data_frame(self, df: pd.DataFrame, dbtable: str, database: str = 'AureliusAi', if_exists: str = 'append') -> str:
+    db_connection_str = f'mysql+pymysql://{self.username}:{self.dbpw}@localhost/{database}'
+    engine = sqlalchemy.create_engine(db_connection_str)
+    try:
+      df.to_sql(dbtable, con=engine, if_exists=if_exists, index=False)
+      engine.dispose()
+      return ""
+    except SQLAlchemyError as e:
+      error = str(e.__dict__['orig'])
+      engine.dispose()
+      return error
 
 
 class SqliteDataDB:

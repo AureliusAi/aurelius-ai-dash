@@ -5,3 +5,4 @@ flask-sock
 sqlalchemy
 tensorflow
 cvxopt
+pymysql
