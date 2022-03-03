@@ -1,7 +1,9 @@
 import sqlite3
 import sqlalchemy
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 import pymysql
+import pymysql.cursors
 import pandas as pd
 from typing import Tuple
 import pandas as pd
@@ -20,8 +22,58 @@ class MariaDB:
     engine.dispose()
     return df
 
+  def get_pymysql_connection(self, database: str = 'AureliusAi'):
+    """returns a pymysql connection object to the AureliusAi DB
+
+    Args:
+        database (str, optional): _description_. Defaults to 'AureliusAi'.
+
+    Returns:
+        _type_: pymysql connection object onto which queries can be done
+    """
+    return pymysql.connect(host='localhost', user=self.username, password=self.dbpw, db=database, cursorclass=pymysql.cursors.DictCursor)
+
+  def insert_list_data(self, sql: str, input_list: list, database: str = 'AureliusAi'):
+    """Insert data into the SQL DB
+
+    Args:
+        sql (str): the sql statement in the bulk upload format using ? marks
+        input_dict (list): list of tuples containing all the instances to insert into the DB
+
+          example: 
+          
+          sql: INSERT INTO syain VALUES (?,?,?)
+          input_list: [(1,'鈴木','suzuki'),
+          (2,'田中','tanaka'),
+          (3,'佐藤','sato'),
+          ]
+
+    Returns:
+        [type]: err
+    """
+    connection = pymysql.connect(host='localhost', user=self.username, password=self.dbpw, db=database, cursorclass=pymysql.cursors.DictCursor)
+
+    isError: bool = False
+    errorTxt: str = ""
+    try:
+      with connection.cursor() as cursor:
+
+        cursor.executemany(sql, input_list)
+      # connection is not autocommit by default. So you must commit to save
+      # your changes.
+      connection.commit()
+    except pymysql.Error as e:
+      isError = True
+      errorTxt = str(e)
+      cursor.close()
+
+    finally:
+      connection.close()
+
+    return isError, errorTxt
+
   def update_or_delete_data(self, sql: str, database: str = 'AureliusAi'):
-    connection = connection = pymysql.connect(host='localhost', user=self.username, password=self.database, db=database, cursorclass=pymysql.cursors.DictCursor)
+    connection = pymysql.connect(host='localhost', user=self.username, password=self.dbpw, db=database, cursorclass=pymysql.cursors.DictCursor)
     updated_rows: int = 0
     isError: bool = False
     errorTxt: str = ''

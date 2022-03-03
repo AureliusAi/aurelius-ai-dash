@@ -1,6 +1,8 @@
 import json
 import time
 from datetime import datetime
+import numpy as np
+import pandas as pd
 
 import dateutil.parser
 from common.db import MariaDB
@@ -22,15 +24,15 @@ def get_avail_nn_names():
     select `Name` as instance_name, `Version` as version, UpdateDate
     from Config_NN main
     inner join (
-      select `Name` as mName, max(`Version`) as mVersion, isDeleted as maxIsDeleted , UpdateDate as mUpdateDate 
+      select `Name` as mName, max(`Version`) as mVersion, isDeleted as maxIsDeleted
 	  from Config_NN
       Group by `Name`
-    ) maxv on main.Name = maxv.mName and main.Version = maxv.mVersion and  main.UpdateDate = maxv.mUpdateDate
+    ) maxv on main.Name = maxv.mName and main.Version = maxv.mVersion 
     Where maxIsDeleted = 0
     Order by `Name`
   """
   print(f'get all NN instances: {qry}')
-  df, = db.qry_read_data(qry)
+  df = db.qry_read_data(qry)
   if df is None:
     res = dict()
     res['nn_list'] = []
@@ -56,12 +58,12 @@ def get_avail_model_names():
   db = MariaDB()
   qry = f"""
     select 
-      CASE WHEN label IS NOT NULL THEN
-          key || ' -- ' || label 
-        ELSE key 
-        END as key 
+      CASE WHEN `label` IS NOT NULL THEN
+          CONCAT(`key`,' -- ', `label`)
+        ELSE `key` 
+        END as `key` 
       FROM Training_Results
-    ORDER BY key desc
+    ORDER BY `key` desc
   """
   print(f'get all distinct Model instances: {qry}')
   df = db.qry_read_data(qry)
@@ -99,6 +101,9 @@ def get_all_nn_instances():
     res['nn_instances'] = []
     res['error_msg'] = ''
     return res
+  print(df.dtypes)
+  df['creation_date'] = df['creation_date'].dt.strftime('%Y-%m-%d %H:%M:%S')
+  df['updatedAt'] = df['updatedAt'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
   res = dict()
   res['nn_instances'] = df.to_json(orient="records")
@@ -133,14 +138,14 @@ def update_nn_instance():
     res['error_msg'] = ''
     return res
 
-  next_ver: int = int(df_existing['version'].values[0]) + 1
+  next_ver: str = str(int(df_existing['version'].values[0]) + 1)
   created_user: str = df_existing['created_by'].values[0]
   created_date: str = df_existing['created_date'].values[0]
 
   db = MariaDB()
   input_list = []
   input_list.append((inst_name, next_ver, inst_definition, created_date, created_user))
-  is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Version, Definition, CreateDate, CreateUser) VALUES (?, ?, ?, ?, ?)", input_list)
+  is_error, error_msg = db.insert_list_data("INSERT INTO Config_NN (Name, Version, Definition, CreateDate, CreateUser) VALUES (%s, %s, %s, %s, %s)", input_list)
 
   db = MariaDB()
   qry = f"""
@@ -160,6 +165,12 @@ def update_nn_instance():
   else:
     create_date = df_existing['CreateDate'].values[0]
     update_date = df_existing['UpdateDate'].values[0]
+
+    if isinstance(create_date, np.datetime64):
+      create_date_t = pd.to_datetime(str(create_date))
+      create_date = create_date_t.strftime('%Y-%m-%d %H:%M:%S')
+      update_date_t = pd.to_datetime(str(create_date))
+      update_date = update_date_t.strftime('%Y-%m-%d %H:%M:%S')
 
   res = dict()
   res['is_error'] = is_error
@@ -182,7 +193,7 @@ def delete_nn_instance():
 
   db = MariaDB()
   qry = f"""
-    update from Config_NN 
+    update Config_NN 
     set IsDeleted = 1
     where `Name` = '{inst_name}'
     and `Version` = '{inst_version}'
@@ -216,7 +227,7 @@ def save_new_neural_network():
   db = MariaDB()
   input_list = []
   input_list.append((inst_name, inst_definition, user))
-  is_error, error_msg = db.insert_bulk_data("INSERT INTO Config_NN (Name, Definition, CreateUser) VALUES (?,?,?)", input_list)
+  is_error, error_msg = db.insert_list_data("INSERT INTO Config_NN (Name, Definition, CreateUser) VALUES (%s,%s,%s)", input_list)
 
   res = dict()
   res['is_error'] = is_error
